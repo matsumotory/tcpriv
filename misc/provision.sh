@@ -9,7 +9,7 @@ KERNEL_LOCAL_VER=0.0.1
 # use ccache
 HOSTCXX=g++
 CC=gcc
-THREAD=1
+THREAD=2
 
 sudo apt-get update
 sudo apt-get -y install build-essential rake bison git gperf automake m4 \
