@@ -1,7 +1,7 @@
 # tcpriv
 tcp separate privilege on TCP using task_struct.
 
-## Quic setup
+## Quick setup
 
 - install vagrant
 
