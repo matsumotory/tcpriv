@@ -56,4 +56,8 @@ cd $BUILD_MODULE_DIR
 cp -p $SRC_DIR/src/Makefile .&& cp -p $SRC_DIR/src/tcpriv_*.c .
 
 make
+sudo insmod tcpriv_module.ko
+sudo rmmod tcpriv_module.ko
+
+dmesg | tail
 
