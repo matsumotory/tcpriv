@@ -18,7 +18,7 @@ THREAD=2
 if [ -d $SRC_DIR ]; then
   rm -rf $SRC_DIR
 fi
-git clone https://github.com/matsumotory/tcpriv.git $SRC_DIR
+git clone git@github.com:matsumotory/tcpriv.git $SRC_DIR
 
 # setup build enviroment
 sudo apt-get update
