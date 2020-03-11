@@ -14,8 +14,6 @@ MODULE_DESCRIPTION("tcpriv separate privilege on TCP using Linux owner informati
 MODULE_LICENSE("MITL");
 MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
-/* very useful information: https://kel.bz/post/netfilter */
-
 #define TCPRIV_INFO "tcpriv[info]: "
 
 static struct nf_hook_ops nfho;
