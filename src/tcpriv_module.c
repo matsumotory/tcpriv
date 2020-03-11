@@ -27,14 +27,16 @@ static unsigned int hook_func(unsigned int hooknum, struct sk_buff **skb, const 
   return NF_ACCEPT;
 }
 
+static struct nf_hook_ops nfho = {
+  .hook = hook_func,
+  .hooknum = NF_INET_PRE_ROUTING,
+  .pf = PF_INET,
+  .priority = NF_IP_PRI_FIRST,
+};
+
 static int __init tcpriv_init(void)
 {
   printk(KERN_INFO TCPRIV_INFO "open\n");
-
-  nfho.hook = hook_func;
-  nfho.hooknum = NF_INET_PRE_ROUTING;
-  nfho.pf = PF_INET;
-  nfho.priority = NF_IP_PRI_FIRST;
 
   nf_register_net_hook(&init_net, &nfho);
 
