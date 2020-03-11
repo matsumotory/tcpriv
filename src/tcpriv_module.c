@@ -14,6 +14,13 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
 static struct nf_hook_ops nfho;
 
+unsigned int hook_func(unsigned int hooknum, struct sk_buff **skb, const struct net_device *in,
+                       const struct net_device *out, int (*okfn)(struct sk_buff *))
+{
+  printk(KERN_INFO TCPRIV_INFO "Packet!\n");
+  return NF_ACCEPT;
+}
+
 static int __init tcpriv_init(void)
 {
   printk(KERN_INFO TCPRIV_INFO "open\n");
@@ -26,13 +33,6 @@ static int __init tcpriv_init(void)
   nf_register_hook(&nfho);
 
   return 0;
-}
-
-unsigned int hook_func(unsigned int hooknum, struct sk_buff **skb, const struct net_device *in,
-                       const struct net_device *out, int (*okfn)(struct sk_buff *))
-{
-  printk(KERN_INFO TCPRIV_INFO "Packet!\n");
-  return NF_ACCEPT;
 }
 
 static void __exit tcpriv_exit(void)
