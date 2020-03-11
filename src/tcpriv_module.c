@@ -27,10 +27,10 @@ static unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_h
 }
 
 static struct nf_hook_ops nfho = {
-  .hook = hook_func,
-  .hooknum = NF_INET_PRE_ROUTING,
-  .pf = PF_INET,
-  .priority = NF_IP_PRI_FIRST,
+    .hook = hook_func,
+    .hooknum = NF_INET_PRE_ROUTING,
+    .pf = PF_INET,
+    .priority = NF_IP_PRI_FIRST,
 };
 
 static int __init tcpriv_init(void)
