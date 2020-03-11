@@ -15,6 +15,9 @@ CC=gcc
 THREAD=2
 
 # download tcpriv
+if [ -d $SRC_DIR ]; then
+  rm -rf $SRC_DIR
+fi
 git clone https://github.com/matsumotory/tcpriv.git $SRC_DIR
 
 # setup build enviroment
