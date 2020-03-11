@@ -16,7 +16,6 @@ all setup phase was provisioned automatically by `misc/provision.sh` such as ins
 - vagrant provision example
 
 ```
-...
     default:   CC      /home/vagrant/tcpriv/build/kernel_module/tcpriv_module.mod.o
     default:   LD [M]  /home/vagrant/tcpriv/build/kernel_module/tcpriv_module.ko
     default: make[1]: Leaving directory '/usr/src/linux-headers-4.15.0-76-generic'
