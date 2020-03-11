@@ -11,7 +11,7 @@ tcp separate privilege on TCP using task_struct.
 vagrant up
 ```
 
-all setup phase was provisioned by `misc/provision.sh` such as installing packages, setup kernel module enviroment and build kernel module.
+all setup phase was provisioned automatically by `misc/provision.sh` such as installing packages, setup kernel module enviroment and build kernel module.
 
 ## Build and run
 
