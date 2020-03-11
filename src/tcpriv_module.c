@@ -1,7 +1,13 @@
+#include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>
+#include <linux/ip.h>
+#include <linux/string.h>
+#include <linux/inet.h>
+#include <linux/tcp.h>
+#include <linux/udp.h>
 
 MODULE_AUTHOR("matsumotory");
 MODULE_DESCRIPTION("tcpriv separate privilege on TCP using Linux owner information");
@@ -30,14 +36,14 @@ static int __init tcpriv_init(void)
   nfho.pf = PF_INET;
   nfho.priority = NF_IP_PRI_FIRST;
 
-  nf_register_hook(&nfho);
+  nf_register_net_hook(&init_net, &nfho);
 
   return 0;
 }
 
 static void __exit tcpriv_exit(void)
 {
-  nf_unregister_hook(&nfho);
+  nf_unregister_net_hook(&init_net, &nfho);
   printk(KERN_INFO TCPRIV_INFO "close\n");
 }
 
