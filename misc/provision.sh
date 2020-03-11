@@ -5,7 +5,7 @@ KSHORTVERSION=`uname -r | awk -F. '{printf "%d.%d.%d", $1, $2, $3}'`
 KERNEL_BUILD_HOST=matsumotory
 KERNEL_BUILD_USER=matsumotory
 KERNEL_LOCAL_VER=0.0.1
-SRC_DIR=~/src
+SRC_DIR=~/tcpriv
 BUILD_DIR=$SRC_DIR/build
 BUILD_MODULE_DIR=$BUILD_DIR/kernel_module
 
@@ -15,7 +15,7 @@ CC=gcc
 THREAD=2
 
 # download tcpriv
-git clone git@github.com:matsumotory/tcpriv $SRC_DIR
+git clone https://github.com/matsumotory/tcpriv.git $SRC_DIR
 
 # setup build enviroment
 sudo apt-get update
@@ -33,22 +33,24 @@ sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/c
 if [ -d $BUILD_DIR ]; then
   rm -rf $BUILD_DIR
 fi
-
 mkdir $BUILD_DIR
-cd $BUILD_DIR
-tar xf /usr/src/linux-source-$KSHORTVERSION.tar.bz2
-cd ./linux-source-$KSHORTVERSION
-cp /boot/config-$KVERSION .config
-make olddefconfig
-KBUILD_BUILD_HOST=$KERNEL_BUILD_HOST KBUILD_BUILD_USER=$KERNEL_BUILD_USER USE_CCACHE=1 CCACHE_DIR=~/.ccache make -j$THREAD HOSTCXX="$HOSTCXX" CC="$CC"
+
+## builde new kernel
+#cd $BUILD_DIR
+#tar xf /usr/src/linux-source-$KSHORTVERSION.tar.bz2
+#cd ./linux-source-$KSHORTVERSION
+#cp /boot/config-$KVERSION .config
+#make olddefconfig
+#KBUILD_BUILD_HOST=$KERNEL_BUILD_HOST KBUILD_BUILD_USER=$KERNEL_BUILD_USER USE_CCACHE=1 CCACHE_DIR=~/.ccache make -j$THREAD HOSTCXX="$HOSTCXX" CC="$CC"
 
 # build kernel modules
 if [ -d $BUILD_MODULE_DIR ]; then
   rm -rf $BUILD_MODULE_DIR
 fi
+mkdir $BUILD_MODULE_DIR
 
 cd $BUILD_MODULE_DIR
-cp -p $SRC_DIR/Makefile .&& cp -p $SRC_DIR/tcpriv_module.c .
+cp -p $SRC_DIR/src/Makefile .&& cp -p $SRC_DIR/src/tcpriv_module.c .
 
 make
 
