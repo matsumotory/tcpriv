@@ -1,37 +1,20 @@
 #include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/kthread.h>
 
 MODULE_AUTHOR("matsumotory");
 MODULE_DESCRIPTION("run kthread");
 MODULE_LICENSE("GPL");
+MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
-struct task_struct *k;
-
-static int kthread_cb(void *arg)
+static int __init tcpriv_init(void)    
 {
-  printk("[%s] running as kthread\n", k->comm);
-  while(!kthread_should_stop()) {
-    schedule();
-  }
-
+  printk(KERN_INFO "open\n");
   return 0;
 }
-
-static int __init run_kthread_init(void)
+ 
+static void __exit tcpriv_exit(void)    
 {
-  k = kthread_create(kthread_cb, NULL, "matsumotory");
-  printk(KERN_INFO "[%s] wake up as kthread\n", k->comm);
-  wake_up_process(k);
-
-  return 0;
+  printk(KERN_INFO "close\n");
 }
-
-static void __exit run_kthread_exit(void)
-{
-  printk(KERN_INFO "[%s] stop kthread\n", k->comm);
-  kthread_stop(k);
-}
-
-module_init(run_kthread_init);
-module_exit(run_kthread_exit);
+ 
+module_init(tcpriv_init);
+module_exit(tcpriv_exit); 

@@ -1,4 +1,4 @@
-obj-m := tcpriv_module.o tcpriv_test_module.o
+obj-m := tcpriv_module.o
 clean-files := *.o *.ko *.mod.[co] *~
 
 KERNEL_SRC_DIR := /lib/modules/$(shell uname -r)/build
