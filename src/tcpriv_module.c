@@ -18,13 +18,25 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
 static struct nf_hook_ops nfho;
 
-static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
+static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
   struct iphdr *iphdr = ip_hdr(skb);
   struct tcphdr *tcphdr = tcp_hdr(skb);
 
   if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
-    printk(KERN_INFO TCPRIV_INFO "tcpriv find local out TCP syn packet.\n");
+    printk(KERN_INFO TCPRIV_INFO "tcpriv find local in TCP syn packet from %s.\n", inet_ntoa(*((struct in_addr *)&((iphdr->daddr)))));
+  }
+
+  return NF_ACCEPT;
+}
+
+static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
+{
+  struct iphdr *iphdr = ip_hdr(skb);
+  struct tcphdr *tcphdr = tcp_hdr(skb);
+
+  if (iphdr->protocol == IPPROTO_TCP && tcphdr->ack) {
+    printk(KERN_INFO TCPRIV_INFO "tcpriv find local out TCP ack packet from %s.\n", inet_ntoa(*((struct in_addr *)&((iphdr->saddr)))));
   }
 
   return NF_ACCEPT;
@@ -33,6 +45,13 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
 static int __init tcpriv_init(void)
 {
   printk(KERN_INFO TCPRIV_INFO "open\n");
+
+  nfho.hook = hook_local_in_func;
+  nfho.hooknum = NF_INET_LOCAL_IN;
+  nfho.pf = PF_INET;
+  nfho.priority = NF_IP_PRI_FIRST;
+
+  nf_register_net_hook(&init_net, &nfho);
 
   nfho.hook = hook_local_out_func;
   nfho.hooknum = NF_INET_LOCAL_OUT;
