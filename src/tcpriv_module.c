@@ -9,6 +9,8 @@
 #include <linux/tcp.h>
 #include <linux/udp.h>
 
+#include <arpa/inet.h>
+
 MODULE_AUTHOR("matsumotory");
 MODULE_DESCRIPTION("tcpriv separate privilege on TCP using Linux owner information");
 MODULE_LICENSE("MITL");
@@ -24,7 +26,7 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
   struct tcphdr *tcphdr = tcp_hdr(skb);
 
   if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
-    printk(KERN_INFO TCPRIV_INFO "tcpriv find local in TCP syn packet from %s.\n", inet_ntoa(*((struct in_addr *)&((iphdr->daddr)))));
+    printk(KERN_INFO TCPRIV_INFO "tcpriv find local in TCP syn packet from %s.\n", inet_ntoa(iphdr->daddr));
   }
 
   return NF_ACCEPT;
@@ -36,7 +38,7 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
   struct tcphdr *tcphdr = tcp_hdr(skb);
 
   if (iphdr->protocol == IPPROTO_TCP && tcphdr->ack) {
-    printk(KERN_INFO TCPRIV_INFO "tcpriv find local out TCP ack packet from %s.\n", inet_ntoa(*((struct in_addr *)&((iphdr->saddr)))));
+    printk(KERN_INFO TCPRIV_INFO "tcpriv find local out TCP ack packet from %s.\n", inet_ntoa(iphdr->saddr));
   }
 
   return NF_ACCEPT;
