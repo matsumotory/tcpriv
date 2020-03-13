@@ -24,9 +24,11 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
   struct tcphdr *tcphdr = tcp_hdr(skb);
   char addr_string[16];
 
-  if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
-    snprintf(addr_string, 16, "%pI4", &iphdr->daddr);
-    printk(KERN_INFO TCPRIV_INFO "tcpriv find local in TCP syn packet from %s.\n", addr_string);
+  if (iphdr->version == 4) {
+    if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
+      snprintf(addr_string, 16, "%pI4", &iphdr->daddr);
+      printk(KERN_INFO TCPRIV_INFO "tcpriv found local in TCP syn packet from %s.\n", addr_string);
+    }
   }
 
   return NF_ACCEPT;
@@ -38,9 +40,11 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
   struct tcphdr *tcphdr = tcp_hdr(skb);
   char addr_string[16];
 
-  if (iphdr->protocol == IPPROTO_TCP && tcphdr->ack) {
-    snprintf(addr_string, 16, "%pI4", &iphdr->saddr);
-    printk(KERN_INFO TCPRIV_INFO "tcpriv find local out TCP ack packet from %s.\n", addr_string);
+  if (iphdr->version == 4) {
+    if (iphdr->protocol == IPPROTO_TCP && tcphdr->ack) {
+      snprintf(addr_string, 16, "%pI4", &iphdr->saddr);
+      printk(KERN_INFO TCPRIV_INFO "tcpriv found local out TCP ack packet from %s.\n", addr_string);
+    }
   }
 
   return NF_ACCEPT;
