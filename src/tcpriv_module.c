@@ -70,7 +70,8 @@ static int __init tcpriv_init(void)
 
 static void __exit tcpriv_exit(void)
 {
-  nf_unregister_net_hook(&init_net, &nfho);
+  nf_unregister_net_hook(&init_net, &nfho_in);
+  nf_unregister_net_hook(&init_net, &nfho_out);
   printk(KERN_INFO TCPRIV_INFO "close\n");
 }
 
