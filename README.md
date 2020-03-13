@@ -19,11 +19,12 @@ all setup phase was provisioned automatically by `misc/provision.sh` such as ins
 - vagrant provision example
 
 ```
-    default:   CC      /home/vagrant/tcpriv/build/kernel_module/tcpriv_module.mod.o
-    default:   LD [M]  /home/vagrant/tcpriv/build/kernel_module/tcpriv_module.ko
-    default: make[1]: Leaving directory '/usr/src/linux-headers-4.15.0-76-generic'
-    default: [63992.606662] tcpriv[info]: open
-    default: [63992.611846] tcpriv[info]: close
+dmesg | tail
+
+[  577.102930] tcpriv[info]: open
+[  588.734563] tcpriv[info]: tcpriv found local in TCP syn packet from 10.0.2.2.
+[  588.734589] tcpriv[info]: tcpriv found local out TCP syn packet from 10.0.2.15.
+[  606.533195] tcpriv[info]: close
 ```
 
 
