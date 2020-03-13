@@ -16,7 +16,8 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
 #define TCPRIV_INFO "tcpriv[info]: "
 
-static struct nf_hook_ops nfho;
+static struct nf_hook_ops nfho_in;
+static struct nf_hook_ops nfho_out;
 
 static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
@@ -50,19 +51,19 @@ static int __init tcpriv_init(void)
 {
   printk(KERN_INFO TCPRIV_INFO "open\n");
 
-  nfho.hook = hook_local_in_func;
-  nfho.hooknum = NF_INET_LOCAL_IN;
-  nfho.pf = PF_INET;
-  nfho.priority = NF_IP_PRI_FIRST;
+  nfho_in.hook = hook_local_in_func;
+  nfho_in.hooknum = NF_INET_LOCAL_IN;
+  nfho_in.pf = PF_INET;
+  nfho_in.priority = NF_IP_PRI_FIRST;
 
-  nf_register_net_hook(&init_net, &nfho);
+  nf_register_net_hook(&init_net, &nfho_in);
 
-  nfho.hook = hook_local_out_func;
-  nfho.hooknum = NF_INET_LOCAL_OUT;
-  nfho.pf = PF_INET;
-  nfho.priority = NF_IP_PRI_FIRST;
+  nfho_out.hook = hook_local_out_func;
+  nfho_out.hooknum = NF_INET_LOCAL_OUT;
+  nfho_out.pf = PF_INET;
+  nfho_out.priority = NF_IP_PRI_FIRST;
 
-  nf_register_net_hook(&init_net, &nfho);
+  nf_register_net_hook(&init_net, &nfho_out);
 
   return 0;
 }
