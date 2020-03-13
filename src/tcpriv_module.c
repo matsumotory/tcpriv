@@ -9,9 +9,6 @@
 #include <linux/tcp.h>
 #include <linux/udp.h>
 
-#include <net/ip.h>
-#include <net/tcp.h>
-
 MODULE_AUTHOR("matsumotory");
 MODULE_DESCRIPTION("tcpriv separate privilege on TCP using Linux owner information");
 MODULE_LICENSE("MITL");
@@ -21,9 +18,15 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
 static struct nf_hook_ops nfho;
 
-static unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
+static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
-  printk(KERN_INFO TCPRIV_INFO "tcpriv find packet.\n");
+  struct iphdr *iphdr = ip_hdr(skb);
+  struct tcphdr *tcphdr = tcp_hdr(skb);
+
+  if (iphdr->protocolo == IPPROTO_TCP && tcphdr->syn) {
+    printk(KERN_INFO TCPRIV_INFO "tcpriv find local out TCP syn packet.\n");
+  }
+
   return NF_ACCEPT;
 }
 
@@ -31,7 +34,7 @@ static int __init tcpriv_init(void)
 {
   printk(KERN_INFO TCPRIV_INFO "open\n");
 
-  nfho.hook = hook_func;
+  nfho.hook = hook_local_out_func;
   nfho.hooknum = NF_INET_LOCAL_OUT;
   nfho.pf = PF_INET;
   nfho.priority = NF_IP_PRI_FIRST;
