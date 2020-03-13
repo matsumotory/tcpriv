@@ -9,8 +9,6 @@
 #include <linux/tcp.h>
 #include <linux/udp.h>
 
-#include <arpa/inet.h>
-
 MODULE_AUTHOR("matsumotory");
 MODULE_DESCRIPTION("tcpriv separate privilege on TCP using Linux owner information");
 MODULE_LICENSE("MITL");
@@ -24,9 +22,11 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
 {
   struct iphdr *iphdr = ip_hdr(skb);
   struct tcphdr *tcphdr = tcp_hdr(skb);
+  char addr_string[16];
 
   if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
-    printk(KERN_INFO TCPRIV_INFO "tcpriv find local in TCP syn packet from %s.\n", inet_ntoa(iphdr->daddr));
+    snprintf(addr_string, 16, "%pI4", &iphdr->daddr);
+    printk(KERN_INFO TCPRIV_INFO "tcpriv find local in TCP syn packet from %s.\n", addr_string);
   }
 
   return NF_ACCEPT;
@@ -36,9 +36,11 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
 {
   struct iphdr *iphdr = ip_hdr(skb);
   struct tcphdr *tcphdr = tcp_hdr(skb);
+  char addr_string[16];
 
   if (iphdr->protocol == IPPROTO_TCP && tcphdr->ack) {
-    printk(KERN_INFO TCPRIV_INFO "tcpriv find local out TCP ack packet from %s.\n", inet_ntoa(iphdr->saddr));
+    snprintf(addr_string, 16, "%pI4", &iphdr->saddr);
+    printk(KERN_INFO TCPRIV_INFO "tcpriv find local out TCP ack packet from %s.\n", addr_string);
   }
 
   return NF_ACCEPT;
