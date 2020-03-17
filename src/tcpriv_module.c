@@ -16,24 +16,21 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
 #define TCPRIV_INFO "tcpriv[info]: "
 
+#define TCPOLEN_EXP_TCPRIV_BASE   6
+/* ref: https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml */
+#define TCPOPT_TCPRIV_MAGIC       0xF991
+
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
-
-static void tcpriv_parse_options(const struct tcphdr *th,
-			      struct tcp_options_received *opt_rx,
-			      const unsigned char *ptr,
-			      int opsize)
+static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_received *opt_rx, const unsigned char *ptr, int opsize)
 {
-	if (static_branch_unlikely(&tcp_have_smc)) {
-		if (th->syn && !(opsize & 1) &&
-		    opsize >= TCPOLEN_EXP_SMC_BASE &&
-		    get_unaligned_be32(ptr) == TCPOPT_SMC_MAGIC)
-			opt_rx->smc_ok = 1;
-	}
+		if (th->syn && !(opsize & 1) && opsize >= TCPOLEN_EXP_TCPRIV_BASE && get_unaligned_be32(ptr) == TCPOPT_TCPRIV_MAGIC) {
+      // check tcpriv parse
+    }
 }
 
-
+/* ref: https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_input.c#L3839 */
 void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, struct tcp_options_received *opt_rx, int estab,
                        struct tcp_fastopen_cookie *foc)
 {
@@ -68,7 +65,7 @@ void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, 
         /* Fast Open or SMC option shares code 254 using a 16 bits magic number. */
         if (opsize >= TCPOLEN_EXP_FASTOPEN_BASE && get_unaligned_be16(ptr) == TCPOPT_FASTOPEN_MAGIC) {
           // do nothing
-        } else if (opsize >= TCPOLEN_EXP_SMC_BASE && get_unaligned_be16(ptr) == TCPOPT_SMC_MAGIC) {
+        } else if (th->syn && !(opsize & 1) && opsize >= TCPOLEN_EXP_SMC_BASE && get_unaligned_be16(ptr) == TCPOPT_SMC_MAGIC) {
           // do nothing
         } else {
           tcpriv_parse_options(th, opt_rx, ptr, opsize);
