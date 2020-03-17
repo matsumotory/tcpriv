@@ -19,8 +19,8 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
-
-void tcp_parse_options(const struct net *net, const struct sk_buff *skb, struct tcp_options_received *opt_rx, int estab, struct tcp_fastopen_cookie *foc)
+void tcp_parse_options(const struct net *net, const struct sk_buff *skb, struct tcp_options_received *opt_rx, int estab,
+                       struct tcp_fastopen_cookie *foc)
 {
   const unsigned char *ptr;
   const struct tcphdr *th = tcp_hdr(skb);
@@ -36,7 +36,7 @@ void tcp_parse_options(const struct net *net, const struct sk_buff *skb, struct 
     switch (opcode) {
     case TCPOPT_EOL:
       return;
-    case TCPOPT_NOP:  /* Ref: RFC 793 section 3.1 */
+    case TCPOPT_NOP: /* Ref: RFC 793 section 3.1 */
       length--;
       continue;
     default:
@@ -46,7 +46,7 @@ void tcp_parse_options(const struct net *net, const struct sk_buff *skb, struct 
       if (opsize < 2) /* "silly options" */
         return;
       if (opsize > length)
-        return;  /* don't parse partial options */
+        return; /* don't parse partial options */
       switch (opcode) {
 
       case TCPOPT_EXP:
@@ -55,12 +55,10 @@ void tcp_parse_options(const struct net *net, const struct sk_buff *skb, struct 
          */
         if (opsize >= TCPOLEN_EXP_FASTOPEN_BASE && get_unaligned_be16(ptr) == TCPOPT_FASTOPEN_MAGIC)
           // do nothing
-        else
-          tcpriv_parse_options(th, opt_rx, ptr, opsize);
+          else tcpriv_parse_options(th, opt_rx, ptr, opsize);
         break;
-
       }
-      ptr += opsize-2;
+      ptr += opsize - 2;
       length -= opsize;
     }
   }
@@ -72,24 +70,24 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
   struct tcphdr *tcphdr = tcp_hdr(skb);
   struct tcp_options_received tmp_opt;
 
-//struct tcp_options_received {
-//  /*  PAWS/RTTM data  */
-//  int  ts_recent_stamp;/* Time we stored ts_recent (for aging) */
-//  u32  ts_recent;  /* Time stamp to echo next    */
-//  u32  rcv_tsval;  /* Time stamp value               */
-//  u32  rcv_tsecr;  /* Time stamp echo reply          */
-//  u16  saw_tstamp : 1,  /* Saw TIMESTAMP on last packet    */
-//      tstamp_ok : 1,  /* TIMESTAMP seen on SYN packet    */
-//      dsack : 1,  /* D-SACK is scheduled      */
-//      wscale_ok : 1,  /* Wscale seen on SYN packet    */
-//      sack_ok : 3,  /* SACK seen on SYN packet    */
-//      smc_ok : 1,  /* SMC seen on SYN packet    */
-//      snd_wscale : 4,  /* Window scaling received from sender  */
-//      rcv_wscale : 4;  /* Window scaling to send to receiver  */
-//  u8  num_sacks;  /* Number of SACK blocks    */
-//  u16  user_mss;  /* mss requested by user in ioctl  */
-//  u16  mss_clamp;  /* Maximal mss, negotiated at connection setup */
-//};
+  // struct tcp_options_received {
+  //  /*  PAWS/RTTM data  */
+  //  int  ts_recent_stamp;/* Time we stored ts_recent (for aging) */
+  //  u32  ts_recent;  /* Time stamp to echo next    */
+  //  u32  rcv_tsval;  /* Time stamp value               */
+  //  u32  rcv_tsecr;  /* Time stamp echo reply          */
+  //  u16  saw_tstamp : 1,  /* Saw TIMESTAMP on last packet    */
+  //      tstamp_ok : 1,  /* TIMESTAMP seen on SYN packet    */
+  //      dsack : 1,  /* D-SACK is scheduled      */
+  //      wscale_ok : 1,  /* Wscale seen on SYN packet    */
+  //      sack_ok : 3,  /* SACK seen on SYN packet    */
+  //      smc_ok : 1,  /* SMC seen on SYN packet    */
+  //      snd_wscale : 4,  /* Window scaling received from sender  */
+  //      rcv_wscale : 4;  /* Window scaling to send to receiver  */
+  //  u8  num_sacks;  /* Number of SACK blocks    */
+  //  u16  user_mss;  /* mss requested by user in ioctl  */
+  //  u16  mss_clamp;  /* Maximal mss, negotiated at connection setup */
+  //};
 
   if (iphdr->version == 4) {
     if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
