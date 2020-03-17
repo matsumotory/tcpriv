@@ -1,5 +1,6 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/config.h>
 #include <linux/init.h>
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>
@@ -79,6 +80,64 @@ void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, 
       length -= opsize;
     }
   }
+}
+
+/* Compute TCP options for SYN packets. This is not the final
+ * network wire format yet.
+ */
+
+/* ref: https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_output.c#L590 */
+static unsigned int tcpriv_tcp_syn_options(struct sock *sk, struct sk_buff *skb, struct tcp_out_options *opts,
+                                           struct tcp_md5sig_key **md5)
+{
+  struct tcp_sock *tp = tcp_sk(sk);
+  unsigned int remaining = MAX_TCP_OPTION_SPACE;
+  struct tcp_fastopen_request *fastopen = tp->fastopen_req;
+
+#ifdef CONFIG_TCP_MD5SIG
+  if (static_branch_unlikely(&tcp_md5_needed) && rcu_access_pointer(tp->md5sig_info)) {
+    *md5 = tp->af_specific->md5_lookup(sk, sk);
+    if (*md5) {
+      remaining -= TCPOLEN_MD5SIG_ALIGNED;
+    }
+  }
+#endif
+
+  /* We always get an MSS option.  The option bytes which will be seen in
+   * normal data packets should timestamps be used, must be in the MSS
+   * advertised.  But we subtract them from tp->mss_cache so that
+   * calculations in tcp_sendmsg are simpler etc.  So account for this
+   * fact here if necessary.  If we don't do this correctly, as a
+   * receiver we won't recognize data packets as being full sized when we
+   * should, and thus we won't abide by the delayed ACK rules correctly.
+   * SACKs don't matter, we never delay an ACK when we have any of those
+   * going out.  */
+  remaining -= TCPOLEN_MSS_ALIGNED;
+
+  if (likely(sock_net(sk)->ipv4.sysctl_tcp_timestamps && !*md5)) {
+    remaining -= TCPOLEN_TSTAMP_ALIGNED;
+  }
+  if (likely(sock_net(sk)->ipv4.sysctl_tcp_window_scaling)) {
+    remaining -= TCPOLEN_WSCALE_ALIGNED;
+  }
+  if (likely(sock_net(sk)->ipv4.sysctl_tcp_sack)) {
+    if (unlikely(!(OPTION_TS & opts->options)))
+      remaining -= TCPOLEN_SACKPERM_ALIGNED;
+  }
+
+  if (fastopen && fastopen->cookie.len >= 0) {
+    u32 need = fastopen->cookie.len;
+
+    need += fastopen->cookie.exp ? TCPOLEN_EXP_FASTOPEN_BASE : TCPOLEN_FASTOPEN_BASE;
+    need = (need + 3) & ~3U; /* Align to 32 bits */
+    if (remaining >= need) {
+      remaining -= need;
+    }
+  }
+
+  tcpriv_set_option(tp, opts, &remaining);
+
+  return MAX_TCP_OPTION_SPACE - remaining;
 }
 
 static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
