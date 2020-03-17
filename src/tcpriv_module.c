@@ -23,12 +23,37 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
 {
   struct iphdr *iphdr = ip_hdr(skb);
   struct tcphdr *tcphdr = tcp_hdr(skb);
+  struct tcp_options_received tmp_opt;
+
+//struct tcp_options_received {
+//  /*	PAWS/RTTM data	*/
+//  int	ts_recent_stamp;/* Time we stored ts_recent (for aging) */
+//  u32	ts_recent;	/* Time stamp to echo next		*/
+//  u32	rcv_tsval;	/* Time stamp value             	*/
+//  u32	rcv_tsecr;	/* Time stamp echo reply        	*/
+//  u16	saw_tstamp : 1,	/* Saw TIMESTAMP on last packet		*/
+//      tstamp_ok : 1,	/* TIMESTAMP seen on SYN packet		*/
+//      dsack : 1,	/* D-SACK is scheduled			*/
+//      wscale_ok : 1,	/* Wscale seen on SYN packet		*/
+//      sack_ok : 3,	/* SACK seen on SYN packet		*/
+//      smc_ok : 1,	/* SMC seen on SYN packet		*/
+//      snd_wscale : 4,	/* Window scaling received from sender	*/
+//      rcv_wscale : 4;	/* Window scaling to send to receiver	*/
+//	u8	num_sacks;	/* Number of SACK blocks		*/
+//	u16	user_mss;	/* mss requested by user in ioctl	*/
+//	u16	mss_clamp;	/* Maximal mss, negotiated at connection setup */
+//};
 
   if (iphdr->version == 4) {
     if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
       printk(KERN_INFO TCPRIV_INFO "tcpriv found local in TCP syn packet from %pI4.\n", &iphdr->saddr);
     }
   }
+
+  /* parse tcp options and store tmp_opt buffer */
+  memset(&tmp_opt, 0, sizeof(tmp_opt));
+  tcp_clear_options(&tmp_opt);
+  tcp_parse_options(&init_net, skb, &tmp_opt, 0, NULL);
 
   return NF_ACCEPT;
 }
