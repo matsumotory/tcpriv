@@ -19,7 +19,22 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
-void tcp_parse_options(const struct net *net, const struct sk_buff *skb, struct tcp_options_received *opt_rx, int estab,
+
+static void tcpriv_parse_options(const struct tcphdr *th,
+			      struct tcp_options_received *opt_rx,
+			      const unsigned char *ptr,
+			      int opsize)
+{
+	if (static_branch_unlikely(&tcp_have_smc)) {
+		if (th->syn && !(opsize & 1) &&
+		    opsize >= TCPOLEN_EXP_SMC_BASE &&
+		    get_unaligned_be32(ptr) == TCPOPT_SMC_MAGIC)
+			opt_rx->smc_ok = 1;
+	}
+}
+
+
+void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, struct tcp_options_received *opt_rx, int estab,
                        struct tcp_fastopen_cookie *foc)
 {
   const unsigned char *ptr;
@@ -50,12 +65,15 @@ void tcp_parse_options(const struct net *net, const struct sk_buff *skb, struct 
       switch (opcode) {
 
       case TCPOPT_EXP:
-        /* Fast Open option shares code 254 using a
-         * 16 bits magic number.
-         */
-        if (opsize >= TCPOLEN_EXP_FASTOPEN_BASE && get_unaligned_be16(ptr) == TCPOPT_FASTOPEN_MAGIC)
+        /* Fast Open or SMC option shares code 254 using a 16 bits magic number. */
+        if (opsize >= TCPOLEN_EXP_FASTOPEN_BASE && get_unaligned_be16(ptr) == TCPOPT_FASTOPEN_MAGIC) {
           // do nothing
-          else tcpriv_parse_options(th, opt_rx, ptr, opsize);
+        } else if (opsize >= TCPOLEN_EXP_SMC_BASE && get_unaligned_be16(ptr) == TCPOPT_SMC_MAGIC) {
+          // do nothing
+        } else {
+          tcpriv_parse_options(th, opt_rx, ptr, opsize);
+        }
+
         break;
       }
       ptr += opsize - 2;
