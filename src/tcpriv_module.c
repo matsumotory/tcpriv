@@ -94,6 +94,7 @@ static unsigned int tcpriv_tcp_syn_options(struct sock *sk, struct sk_buff *skb,
   unsigned int remaining = MAX_TCP_OPTION_SPACE;
   struct tcp_fastopen_request *fastopen = tp->fastopen_req;
 
+  *md5 = NULL;
 #ifdef CONFIG_TCP_MD5SIG
   if (static_branch_unlikely(&tcp_md5_needed) && rcu_access_pointer(tp->md5sig_info)) {
     *md5 = tp->af_specific->md5_lookup(sk, sk);
