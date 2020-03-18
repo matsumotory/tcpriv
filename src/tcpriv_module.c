@@ -20,6 +20,7 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 #define TCPOLEN_EXP_TCPRIV_BASE 6
 /* ref: https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml */
 #define TCPOPT_TCPRIV_MAGIC 0xF991
+#define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 8
 
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
@@ -28,7 +29,7 @@ static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_rec
                                  int opsize)
 {
   if (th->syn && !(opsize & 1) && opsize >= TCPOLEN_EXP_TCPRIV_BASE && get_unaligned_be32(ptr) == TCPOPT_TCPRIV_MAGIC) {
-    // check tcpriv parse
+    /* TODO: check tcpriv information */
   }
 }
 
@@ -79,6 +80,15 @@ void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, 
       ptr += opsize - 2;
       length -= opsize;
     }
+  }
+}
+
+static void tcpriv_set_option(const struct tcp_sock *tp, struct tcp_out_options *opts, unsigned int *remaining)
+{
+  if (*remaining >= TCPOLEN_EXP_TCPRIV_BASE_ALIGNED) {
+    opts->options |= OPTION_TCPRIV;
+    /* TODO: store tcpriv information */
+    *remaining -= TCPOLEN_EXP_TCPRIV_BASE_ALIGNED;
   }
 }
 
