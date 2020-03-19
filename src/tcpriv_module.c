@@ -9,6 +9,8 @@
 #include <linux/inet.h>
 #include <linux/tcp.h>
 #include <linux/udp.h>
+#include <linux/static_key.h>
+#include <net/tcp.h>
 
 MODULE_AUTHOR("matsumotory");
 MODULE_DESCRIPTION("tcpriv separate privilege on TCP using Linux owner information");
