@@ -22,10 +22,95 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 #define TCPOPT_TCPRIV_MAGIC 0xF991
 #define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 8
 
+/*
+#define OPTION_SACK_ADVERTISE (1 << 0)
+#define OPTION_TS   (1 << 1)
+#define OPTION_MD5    (1 << 2)
+#define OPTION_WSCALE   (1 << 3)
+#define OPTION_FAST_OPEN_COOKIE (1 << 8)
+#define OPTION_SMC    (1 << 9)
+*/
+
+#define OPTION_TCPRIV (1 << 10)
+
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
 /* TCP write tcpriv option functions */
+/* ref: https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_output.c#L457 */
+
+static void tcpriv_options_write(__be32 *ptr, u16 *options)
+{
+  if (unlikely(OPTION_TCPRIV & *options)) {
+    *ptr++ = htonl((TCPOPT_NOP << 24) | (TCPOPT_NOP << 16) | (TCPOPT_EXP << 8) | (TCPOLEN_EXP_TCPRIV_BASE));
+    *ptr++ = htonl(TCPOPT_TCPRIV_MAGIC);
+
+    /* TODO; write tcpriv information */
+  }
+}
+
+static void tcporiv_tcp_options_write(__be32 *ptr, struct tcp_sock *tp, struct tcp_out_options *opts)
+{
+  u16 options = opts->options; /* mungable copy */
+
+  if (unlikely(OPTION_MD5 & options)) {
+    *ptr++;
+    ptr += 4;
+  }
+
+  if (unlikely(opts->mss)) {
+    *ptr++;
+  }
+
+  if (likely(OPTION_TS & options)) {
+    if (unlikely(OPTION_SACK_ADVERTISE & options)) {
+      *ptr++;
+      options &= ~OPTION_SACK_ADVERTISE;
+    } else {
+      *ptr++;
+    }
+    *ptr++;
+    *ptr++;
+  }
+
+  if (unlikely(OPTION_SACK_ADVERTISE & options)) {
+    *ptr++;
+  }
+
+  if (unlikely(OPTION_WSCALE & options)) {
+    *ptr++;
+  }
+
+  if (unlikely(opts->num_sack_blocks)) {
+    int this_sack;
+
+    *ptr++;
+
+    for (this_sack = 0; this_sack < opts->num_sack_blocks; ++this_sack) {
+      *ptr++;
+      *ptr++;
+    }
+  }
+
+  if (unlikely(OPTION_FAST_OPEN_COOKIE & options)) {
+    struct tcp_fastopen_cookie *foc = opts->fastopen_cookie;
+    u8 *p = (u8 *)ptr;
+    u32 len; /* Fast Open option length */
+
+    if (foc->exp) {
+      len = TCPOLEN_EXP_FASTOPEN_BASE + foc->len;
+      p += TCPOLEN_EXP_FASTOPEN_BASE;
+    } else {
+      len = TCPOLEN_FASTOPEN_BASE + foc->len;
+      *p++;
+      *p++ = len;
+    }
+
+    ptr += (len + 3) >> 2;
+  }
+
+  tcpriv_options_write(ptr, &options);
+}
 
 /* TCP parse tcpriv option functions */
 static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_received *opt_rx, const unsigned char *ptr,
@@ -85,7 +170,6 @@ void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, 
     }
   }
 }
-
 
 /* TCP set tcpriv option functions */
 static void tcpriv_set_option(const struct tcp_sock *tp, struct tcp_out_options *opts, unsigned int *remaining)
