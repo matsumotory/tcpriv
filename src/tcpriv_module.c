@@ -25,6 +25,9 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
+/* TCP write tcpriv option functions */
+
+/* TCP parse tcpriv option functions */
 static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_received *opt_rx, const unsigned char *ptr,
                                  int opsize)
 {
@@ -83,6 +86,8 @@ void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, 
   }
 }
 
+
+/* TCP set tcpriv option functions */
 static void tcpriv_set_option(const struct tcp_sock *tp, struct tcp_out_options *opts, unsigned int *remaining)
 {
   if (*remaining >= TCPOLEN_EXP_TCPRIV_BASE_ALIGNED) {
