@@ -14,7 +14,7 @@
 
 MODULE_AUTHOR("matsumotory");
 MODULE_DESCRIPTION("tcpriv separate privilege on TCP using Linux owner information");
-MODULE_LICENSE("MITL");
+MODULE_LICENSE("GPL version 2");
 MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
 #define TCPRIV_INFO "tcpriv[info]: "
