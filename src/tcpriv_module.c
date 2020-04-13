@@ -51,7 +51,7 @@ static void tcpriv_options_write(__be32 *ptr, u16 *options)
   }
 }
 
-static void tcporiv_tcp_options_write(__be32 *ptr, struct tcp_sock *tp, struct tcp_out_options *opts)
+static void tcpriv_tcp_options_write(__be32 *ptr, struct tcp_sock *tp, struct tcp_out_options *opts)
 {
   u16 options = opts->options; /* mungable copy */
 
