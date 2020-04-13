@@ -32,6 +32,30 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 #define OPTION_SMC    (1 << 9)
 */
 
+
+/*
+ *     TCP option lengths
+ */
+//#define TCPOLEN_MSS            4
+//#define TCPOLEN_WINDOW         3
+//#define TCPOLEN_SACK_PERM      2
+//#define TCPOLEN_TIMESTAMP      10
+//#define TCPOLEN_MD5SIG         18
+//#define TCPOLEN_FASTOPEN_BASE  2
+//#define TCPOLEN_EXP_FASTOPEN_BASE  4
+//#define TCPOLEN_EXP_SMC_BASE   6
+//
+///* But this is what stacks really send out. */
+//#define TCPOLEN_TSTAMP_ALIGNED		12
+//#define TCPOLEN_WSCALE_ALIGNED		4
+//#define TCPOLEN_SACKPERM_ALIGNED	4
+//#define TCPOLEN_SACK_BASE		2
+//#define TCPOLEN_SACK_BASE_ALIGNED	4
+//#define TCPOLEN_SACK_PERBLOCK		8
+//#define TCPOLEN_MD5SIG_ALIGNED		20
+//#define TCPOLEN_MSS_ALIGNED		4
+//#define TCPOLEN_EXP_SMC_BASE_ALIGNED	8
+
 /* 1 << 10 was used by MPTCP */
 #define OPTION_TCPRIV (1 << 11)
 
