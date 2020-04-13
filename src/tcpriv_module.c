@@ -47,7 +47,7 @@ static void tcpriv_options_write(__be32 *ptr, u16 *options)
     *ptr++ = htonl((TCPOPT_NOP << 24) | (TCPOPT_NOP << 16) | (TCPOPT_EXP << 8) | (TCPOLEN_EXP_TCPRIV_BASE));
     *ptr++ = htonl(TCPOPT_TCPRIV_MAGIC);
 
-    /* TODO; write tcpriv information */
+    /* TODO; write tcpriv information: allocate 32bit (unsinged int) for owner/uid area */
   }
 }
 
