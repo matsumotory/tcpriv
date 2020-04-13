@@ -32,7 +32,8 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 #define OPTION_SMC    (1 << 9)
 */
 
-#define OPTION_TCPRIV (1 << 10)
+/* 1 << 10 was used by MPTCP */
+#define OPTION_TCPRIV (1 << 11)
 
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
