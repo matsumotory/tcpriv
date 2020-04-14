@@ -148,6 +148,10 @@ static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_rec
 {
   if (th->syn && !(opsize & 1) && opsize >= TCPOLEN_EXP_TCPRIV_BASE && get_unaligned_be32(ptr) == TCPOPT_TCPRIV_MAGIC) {
     /* TODO: check tcpriv information */
+    u32 uid, gid;
+    uid = get_unaligned_be32(ptr);
+    gid = get_unaligned_be32(ptr + 4);
+    printk(KERN_INFO TCPRIV_INFO "tcpriv found client process information: %d:%d\n", uid, gid);
   }
 }
 
