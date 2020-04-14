@@ -23,7 +23,7 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 #define TCPOLEN_EXP_TCPRIV_BASE 10
 /* ref: https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml */
 #define TCPOPT_TCPRIV_MAGIC 0xF991
-#define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 8
+#define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 12
 
 /*
 #define OPTION_SACK_ADVERTISE (1 << 0)
