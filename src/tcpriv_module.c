@@ -12,7 +12,8 @@
 #include <net/tcp.h>
 
 MODULE_AUTHOR("matsumotory: Ryosuke Matsumoto");
-MODULE_DESCRIPTION("An Access Control Architecture Separating Privilege Transparently via TCP Connection Based on Process Information");
+MODULE_DESCRIPTION("An Access Control Architecture Separating Privilege Transparently via TCP Connection Based on "
+                   "Process Information");
 MODULE_LICENSE("GPL version 2");
 MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
@@ -32,7 +33,6 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 #define OPTION_FAST_OPEN_COOKIE (1 << 8)
 #define OPTION_SMC    (1 << 9)
 */
-
 
 /*
  *     TCP option lengths
