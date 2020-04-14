@@ -274,12 +274,6 @@ static unsigned int tcpriv_tcp_syn_options(struct sock *sk, struct sk_buff *skb,
   return MAX_TCP_OPTION_SPACE - remaining;
 }
 
-static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
-{
-  struct iphdr *iphdr = ip_hdr(skb);
-  struct tcphdr *tcphdr = tcp_hdr(skb);
-  struct tcp_options_received tmp_opt;
-
   // struct tcp_options_received {
   //  /*  PAWS/RTTM data  */
   //  int  ts_recent_stamp;/* Time we stored ts_recent (for aging) */
@@ -298,6 +292,12 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
   //  u16  user_mss;  /* mss requested by user in ioctl  */
   //  u16  mss_clamp;  /* Maximal mss, negotiated at connection setup */
   //};
+
+static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
+{
+  struct iphdr *iphdr = ip_hdr(skb);
+  struct tcphdr *tcphdr = tcp_hdr(skb);
+  struct tcp_options_received tmp_opt;
 
   if (iphdr->version == 4) {
     if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
