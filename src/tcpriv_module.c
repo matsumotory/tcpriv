@@ -18,7 +18,8 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
 #define TCPRIV_INFO "tcpriv[info]: "
 
-#define TCPOLEN_EXP_TCPRIV_BASE 6
+/* same as OPTION_TS: __u32 tsval, tsecr; */
+#define TCPOLEN_EXP_TCPRIV_BASE 10
 /* ref: https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml */
 #define TCPOPT_TCPRIV_MAGIC 0xF991
 #define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 8
@@ -72,6 +73,8 @@ static void tcpriv_options_write(__be32 *ptr, u16 *options)
     *ptr++ = htonl(TCPOPT_TCPRIV_MAGIC);
 
     /* TODO; write tcpriv information: allocate 32bit (unsinged int) for owner/uid area */
+    *ptr++ = htonl(2000);
+    *ptr++ = htonl(2001);
   }
 }
 
