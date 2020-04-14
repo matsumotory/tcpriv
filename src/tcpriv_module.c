@@ -21,6 +21,7 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
 /* same as OPTION_TS: __u32 tsval, tsecr; */
 #define TCPOLEN_EXP_TCPRIV_BASE 10
+
 /* ref: https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml */
 #define TCPOPT_TCPRIV_MAGIC 0xF991
 #define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 12
@@ -33,6 +34,9 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 #define OPTION_FAST_OPEN_COOKIE (1 << 8)
 #define OPTION_SMC    (1 << 9)
 */
+
+/* 1 << 10 was used by MPTCP */
+#define OPTION_TCPRIV (1 << 11)
 
 /*
  *     TCP option lengths
@@ -56,9 +60,6 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 //#define TCPOLEN_MD5SIG_ALIGNED		20
 //#define TCPOLEN_MSS_ALIGNED		4
 //#define TCPOLEN_EXP_SMC_BASE_ALIGNED	8
-
-/* 1 << 10 was used by MPTCP */
-#define OPTION_TCPRIV (1 << 11)
 
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
