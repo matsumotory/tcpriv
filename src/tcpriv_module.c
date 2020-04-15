@@ -293,6 +293,20 @@ static unsigned int tcpriv_tcp_syn_options(struct sock *sk, struct sk_buff *skb,
 //  u16  mss_clamp;  /* Maximal mss, negotiated at connection setup */
 //};
 
+static inline void tcpriv_tcp_clear_options(struct tcp_options_received *rx_opt)
+{
+  rx_opt->tstamp_ok = rx_opt->sack_ok = 0;
+  rx_opt->wscale_ok = rx_opt->snd_wscale = 0;
+#if IS_ENABLED(CONFIG_SMC)
+  rx_opt->smc_ok = 0;
+#endif
+#if IS_ENABLED(CONFIG_MPTCP)
+  rx_opt->mptcp.mp_capable = 0;
+  rx_opt->mptcp.mp_join = 0;
+  rx_opt->mptcp.dss = 0;
+#endif
+}
+
 static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
   struct iphdr *iphdr = ip_hdr(skb);
@@ -305,18 +319,18 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
   if (iphdr->version == 4) {
     if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
       printk(KERN_INFO TCPRIV_INFO "tcpriv found local in TCP syn packet from %pI4.\n", &iphdr->saddr);
+
+      /* parse tcp options and store tmp_opt buffer */
+      memset(&tmp_opt, 0, sizeof(tmp_opt));
+      tcpriv_tcp_clear_options(&tmp_opt);
+      tcpriv_tcp_parse_options(&init_net, skb, &tmp_opt, 0, NULL);
+
+      sk = state->sk;
+      memset(&opts, 0, sizeof(opts));
+      tcpriv_tcp_syn_options(sk, skb, &opts, &md5);
+      tcpriv_tcp_options_write((__be32 *)(tcphdr + 1), NULL, &opts);
     }
   }
-
-  /* parse tcp options and store tmp_opt buffer */
-  memset(&tmp_opt, 0, sizeof(tmp_opt));
-  tcpriv_tcp_clear_options(&tmp_opt);
-  tcpriv_tcp_parse_options(&init_net, skb, &tmp_opt, 0, NULL);
-
-  sk = state->sk;
-  memset(&opts, 0, sizeof(opts));
-  tcpriv_tcp_syn_options(sk, skb, &opts, &md5);
-  tcpriv_tcp_options_write((__be32*)(tcphdr + 1), NULL, &opts);
 
   return NF_ACCEPT;
 }
