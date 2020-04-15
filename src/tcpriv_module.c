@@ -312,9 +312,6 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
   struct iphdr *iphdr = ip_hdr(skb);
   struct tcphdr *tcphdr = tcp_hdr(skb);
   struct tcp_options_received tmp_opt;
-  struct tcp_out_options opts;
-  struct tcp_md5sig_key *md5;
-  struct sock *sk;
 
   if (iphdr->version == 4) {
     if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
@@ -324,11 +321,6 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
       memset(&tmp_opt, 0, sizeof(tmp_opt));
       tcpriv_tcp_clear_options(&tmp_opt);
       tcpriv_tcp_parse_options(&init_net, skb, &tmp_opt, 0, NULL);
-
-      sk = state->sk;
-      memset(&opts, 0, sizeof(opts));
-      tcpriv_tcp_syn_options(sk, skb, &opts, &md5);
-      tcpriv_tcp_options_write((__be32 *)(tcphdr + 1), NULL, &opts);
     }
   }
 
@@ -339,10 +331,18 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
 {
   struct iphdr *iphdr = ip_hdr(skb);
   struct tcphdr *tcphdr = tcp_hdr(skb);
+  struct tcp_out_options opts;
+  struct tcp_md5sig_key *md5;
+  struct sock *sk;
 
   if (iphdr->version == 4) {
     if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
       printk(KERN_INFO TCPRIV_INFO "tcpriv found local out TCP syn packet from %pI4.\n", &iphdr->saddr);
+
+      sk = state->sk;
+      memset(&opts, 0, sizeof(opts));
+      tcpriv_tcp_syn_options(sk, skb, &opts, &md5);
+      tcpriv_tcp_options_write((__be32 *)(tcphdr + 1), NULL, &opts);
     }
   }
 
