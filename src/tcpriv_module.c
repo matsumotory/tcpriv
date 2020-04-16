@@ -331,12 +331,12 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
 {
   struct iphdr *iphdr = ip_hdr(skb);
   struct tcphdr *tcphdr = tcp_hdr(skb);
-  struct tcp_md5sig_key *md5;
-  struct sock *sk;
 
   if (iphdr->version == 4) {
     if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
       struct tcp_out_options opts;
+      struct sock *sk;
+      struct tcp_md5sig_key *md5;
 
       printk(KERN_INFO TCPRIV_INFO "tcpriv found local out TCP syn packet from %pI4.\n", &iphdr->saddr);
 
