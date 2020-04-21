@@ -80,13 +80,12 @@ static struct tcp_out_options {
   __u8 *hash_location;                         /* temporary pointer, overloaded */
   __u32 tsval, tsecr;                          /* need to include OPTION_TS */
   struct tcp_fastopen_cookie *fastopen_cookie; /* Fast open cookie */
-/* don't implement MPTCP options in 4.15.0-76-generic */
-//  struct mptcp_out_options mptcp;
+  /* don't implement MPTCP options in 4.15.0-76-generic */
+  //  struct mptcp_out_options mptcp;
 };
 
 /* TCP write tcpriv option functions */
 /* ref: https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_output.c#L457 */
-
 
 static void tcpriv_options_write(__be32 *ptr, u16 *options)
 {
