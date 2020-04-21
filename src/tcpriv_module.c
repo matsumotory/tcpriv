@@ -10,7 +10,8 @@
 #include <linux/udp.h>
 #include <linux/static_key.h>
 #include <net/tcp.h>
-#include <net/mptcp.h>
+/* don't implement MPTCP options in 4.15.0-76-generic */
+//#include <net/mptcp.h>
 #include <asm-generic/unaligned.h>
 
 MODULE_AUTHOR("matsumotory: Ryosuke Matsumoto");
@@ -79,7 +80,8 @@ static struct tcp_out_options {
   __u8 *hash_location;                         /* temporary pointer, overloaded */
   __u32 tsval, tsecr;                          /* need to include OPTION_TS */
   struct tcp_fastopen_cookie *fastopen_cookie; /* Fast open cookie */
-  struct mptcp_out_options mptcp;
+/* don't implement MPTCP options in 4.15.0-76-generic */
+//  struct mptcp_out_options mptcp;
 };
 
 /* TCP write tcpriv option functions */
