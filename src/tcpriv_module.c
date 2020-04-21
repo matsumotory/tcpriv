@@ -210,6 +210,7 @@ static void tcpriv_set_option(const struct tcp_sock *tp, struct tcp_out_options 
 {
   if (*remaining >= TCPOLEN_EXP_TCPRIV_BASE_ALIGNED) {
     opts->options |= OPTION_TCPRIV;
+
     /* TODO: store tcpriv information */
     *remaining -= TCPOLEN_EXP_TCPRIV_BASE_ALIGNED;
   }
