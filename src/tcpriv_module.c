@@ -27,12 +27,12 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 #define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 12
 
 #define OPTION_SACK_ADVERTISE (1 << 0)
-#define OPTION_TS   (1 << 1)
-#define OPTION_MD5    (1 << 2)
-#define OPTION_WSCALE   (1 << 3)
+#define OPTION_TS (1 << 1)
+#define OPTION_MD5 (1 << 2)
+#define OPTION_WSCALE (1 << 3)
 #define OPTION_FAST_OPEN_COOKIE (1 << 8)
-#define OPTION_SMC    (1 << 9)
-#define OPTION_MPTCP    (1 << 10)
+#define OPTION_SMC (1 << 9)
+#define OPTION_MPTCP (1 << 10)
 
 /* 1 << 10 was used by MPTCP */
 #define OPTION_TCPRIV (1 << 11)
@@ -62,6 +62,19 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
+
+/* copy the stcut definition from net/ipv4/tcp_output.c */
+struct tcp_out_options {
+  u16 options;                                 /* bit field of OPTION_* */
+  u16 mss;                                     /* 0 to disable */
+  u8 ws;                                       /* window scale, 0 to disable */
+  u8 num_sack_blocks;                          /* number of SACK blocks to include */
+  u8 hash_size;                                /* bytes in hash_location */
+  __u8 *hash_location;                         /* temporary pointer, overloaded */
+  __u32 tsval, tsecr;                          /* need to include OPTION_TS */
+  struct tcp_fastopen_cookie *fastopen_cookie; /* Fast open cookie */
+  struct mptcp_out_options mptcp;
+};
 
 /* TCP write tcpriv option functions */
 /* ref: https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_output.c#L457 */
