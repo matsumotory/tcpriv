@@ -26,14 +26,13 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 #define TCPOPT_TCPRIV_MAGIC 0xF991
 #define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 12
 
-/*
 #define OPTION_SACK_ADVERTISE (1 << 0)
 #define OPTION_TS   (1 << 1)
 #define OPTION_MD5    (1 << 2)
 #define OPTION_WSCALE   (1 << 3)
 #define OPTION_FAST_OPEN_COOKIE (1 << 8)
 #define OPTION_SMC    (1 << 9)
-*/
+#define OPTION_MPTCP    (1 << 10)
 
 /* 1 << 10 was used by MPTCP */
 #define OPTION_TCPRIV (1 << 11)
