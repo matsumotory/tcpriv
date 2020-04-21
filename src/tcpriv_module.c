@@ -64,7 +64,7 @@ static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
 /* copy the stcut definition from net/ipv4/tcp_output.c */
-struct tcp_out_options {
+static struct tcp_out_options {
   u16 options;                                 /* bit field of OPTION_* */
   u16 mss;                                     /* 0 to disable */
   u8 ws;                                       /* window scale, 0 to disable */
