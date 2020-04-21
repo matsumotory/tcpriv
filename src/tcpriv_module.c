@@ -61,6 +61,10 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 //#define TCPOLEN_MSS_ALIGNED		4
 //#define TCPOLEN_EXP_SMC_BASE_ALIGNED	8
 
+/* net/ipv4/tcp_ipv4.c: RFC2385 MD5 checksumming requires a mapping of IP address->MD5 Key.*/
+DEFINE_STATIC_KEY_FALSE(tcp_md5_needed);
+EXPORT_SYMBOL(tcp_md5_needed);
+
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
