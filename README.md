@@ -54,16 +54,36 @@ sudo rmmod tcpriv_module.ko
   <img alt="tcpriv flow" src="https://github.com/matsumotory/tcpriv/blob/master/misc/figures/tcpriv-flow.png?raw=true" width="800">
 </p>
 
-- a client server (192.168.1.186)
+#### 1. A remote server (192.168.1.172)
 
 ```
+# in host
+vagrant up
+vagrant ssh
+
+# in vagrant VM
+cd ~/tcpriv/build/kernel_module
+sudo insmod tcpriv_module.ko
+tail -f /var/log/kern.log
+```
+
+#### 2. A client server (192.168.1.186)
+
+```
+# in host
+vagrant up
+vagrant ssh
+
+# in vagrant VM
+cd ~/tcpriv/build/kernel_module
 sudo insmod tcpriv_module.ko
 telnet 192.168.1.172 22
 ```
 
-- a remote server (192.168.1.172)
+#### 3. A remote server (192.168.1.172)
 
 ```
+# in vagrant VM
 tail -f /var/log/kern.log
 
 Apr 22 02:46:49 vagrant kernel: [  152.239790] tcpriv[info]: tcpriv found local in TCP syn packet from 192.168.1.186.
