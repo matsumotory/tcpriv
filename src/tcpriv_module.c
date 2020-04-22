@@ -9,6 +9,7 @@
 #include <linux/tcp.h>
 #include <linux/udp.h>
 #include <linux/static_key.h>
+#include <linux/cred.h>
 #include <net/tcp.h>
 #include <asm-generic/unaligned.h>
 
@@ -95,12 +96,15 @@ static struct tcp_out_options {
 static void tcpriv_options_write(__be32 *ptr, u16 *options)
 {
   if (unlikely(OPTION_TCPRIV & *options)) {
+    kuid_t uid = current_uid();
+    kgid_t gid = current_gid();
+
     *ptr++ = htonl((TCPOPT_NOP << 24) | (TCPOPT_NOP << 16) | (TCPOPT_EXP << 8) | (TCPOLEN_EXP_TCPRIV_BASE));
     *ptr++ = htonl(TCPOPT_TCPRIV_MAGIC);
 
     /* TODO; write tcpriv information: allocate 32bit (unsinged int) for owner/uid area */
-    *ptr++ = htonl(2000);
-    *ptr++ = htonl(2001);
+    *ptr++ = htonl(uid.val);
+    *ptr++ = htonl(gid.val);
   }
 }
 
@@ -176,7 +180,7 @@ static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_rec
     u32 uid, gid;
     uid = get_unaligned_be32(ptr + 4);
     gid = get_unaligned_be32(ptr + 8);
-    printk(KERN_INFO TCPRIV_INFO "tcpriv found client process information: %d:%d\n", uid, gid);
+    printk(KERN_INFO TCPRIV_INFO "tcpriv found client process information: uid=%d gid=%d\n", uid, gid);
   }
 }
 
