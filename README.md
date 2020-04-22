@@ -51,19 +51,19 @@ sudo rmmod tcpriv_module.ko
 #### Remote servers get process information like uid/gid from a client server process transparently
 
 <p align="center">
-  <img alt="tcpriv flow" src="https://github.com/matsumotory/tcpriv/blob/master/misc/figures/tcpriv-flow.png?raw=true" width="600">
+  <img alt="tcpriv flow" src="https://github.com/matsumotory/tcpriv/blob/master/misc/figures/tcpriv-flow.png?raw=true" width="800">
 </p>
 
 - a client server (192.168.1.186)
 
-``
+```
 sudo insmod tcpriv_module.ko
 telnet 192.168.1.172 22
 ```
 
 - a remote server (192.168.1.172)
 
-``
+```
 tail -f /var/log/kern.log
 
 Apr 22 02:46:49 vagrant kernel: [  152.239790] tcpriv[info]: tcpriv found local in TCP syn packet from 192.168.1.186.
