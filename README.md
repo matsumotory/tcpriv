@@ -50,6 +50,10 @@ sudo rmmod tcpriv_module.ko
 
 #### Remote servers get process information like uid/gid from a client server process transparently
 
+<p align="center">
+  <img alt="tcpriv flow" src="https://github.com/matsumotory/tcpriv/blob/master/misc/figures/tcpriv-flow.png?raw=true" width="600">
+</p>
+
 - a client server (192.168.1.186)
 
 ``
