@@ -180,7 +180,7 @@ static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_rec
     u32 uid, gid;
     uid = get_unaligned_be32(ptr + 4);
     gid = get_unaligned_be32(ptr + 8);
-    printk(KERN_INFO TCPRIV_INFO "tcpriv found client process information: uid=%d gid=%d\n", uid, gid);
+    printk(KERN_INFO TCPRIV_INFO "found client process info: uid=%d gid=%d\n", uid, gid);
   }
 }
 
@@ -345,7 +345,7 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
 
   if (iphdr->version == 4) {
     if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
-      printk(KERN_INFO TCPRIV_INFO "tcpriv found local in TCP syn packet from %pI4.\n", &iphdr->saddr);
+      printk(KERN_INFO TCPRIV_INFO "found local in TCP syn packet from %pI4.\n", &iphdr->saddr);
 
       /* parse tcp options and store tmp_opt buffer */
       memset(&tmp_opt, 0, sizeof(tmp_opt));
@@ -368,7 +368,7 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
       struct sock *sk;
       struct tcp_md5sig_key *md5;
 
-      printk(KERN_INFO TCPRIV_INFO "tcpriv found local out TCP syn packet from %pI4.\n", &iphdr->saddr);
+      printk(KERN_INFO TCPRIV_INFO "found local out TCP syn packet from %pI4.\n", &iphdr->saddr);
 
       sk = state->sk;
       memset(&opts, 0, sizeof(opts));
