@@ -388,6 +388,8 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
 static int __init tcpriv_init(void)
 {
   printk(KERN_INFO TCPRIV_INFO "open\n");
+  printk(KERN_INFO TCPRIV_INFO "An Access Control Architecture Separating Privilege Transparently via TCP Connection "
+                               "Based on Process Information\n");
 
   nfho_in.hook = hook_local_in_func;
   nfho_in.hooknum = NF_INET_LOCAL_IN;
