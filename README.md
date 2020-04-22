@@ -45,3 +45,24 @@ sudo insmod tcpriv_module.ko
 dmesg | tail
 sudo rmmod tcpriv_module.ko
 ```
+
+## Experiment
+
+#### Remote servers get process information like uid/gid from a client server process transparently
+
+- a client server (192.168.1.186)
+
+``
+sudo insmod tcpriv_module.ko
+telnet 192.168.1.172 22
+```
+
+- a remote server (192.168.1.172)
+
+``
+tail -f /var/log/kern.log
+
+Apr 22 02:46:49 vagrant kernel: [  152.239790] tcpriv[info]: tcpriv found local in TCP syn packet from 192.168.1.186.
+Apr 22 02:46:49 vagrant kernel: [  152.239811] tcpriv[info]: tcpriv found client process information: 63889:2000
+Apr 22 02:46:49 vagrant kernel: [  152.239833] tcpriv[info]: tcpriv found local out TCP syn packet from 192.168.1.172.
+```
