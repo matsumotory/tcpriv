@@ -23,10 +23,10 @@ all setup phase was provisioned automatically by `misc/provision.sh` such as ins
 ```
 dmesg | tail
 
-Apr 22 05:16:23 vagrant kernel: [430] tcpriv[info]: open
-Apr 22 05:16:23 vagrant kernel: [543] tcpriv[info]: found local in TCP syn packet from 192.168.1.186.
-Apr 22 05:16:23 vagrant kernel: [566] tcpriv[info]: found client process info: uid=1000 gid=1000
-Apr 22 05:16:23 vagrant kernel: [587] tcpriv[info]: found local out TCP syn packet from 192.168.1.172.
+[430] tcpriv[info]: open
+[543] tcpriv[info]: found local in TCP syn packet from 192.168.1.186.
+[566] tcpriv[info]: found client process info: uid=1000 gid=1000
+[587] tcpriv[info]: found local out TCP syn packet from 192.168.1.172.
 ```
 
 
