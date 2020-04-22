@@ -84,7 +84,7 @@ ps -o cmd,uid,gid | grep telnet
 telnet     1000  1000
 ```
 
-#### 3. A remote server (192.168.1.172)
+#### 3. The remote server (192.168.1.172)
 
 ```
 # in vagrant VM
