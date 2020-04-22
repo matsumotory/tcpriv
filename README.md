@@ -86,7 +86,7 @@ telnet 192.168.1.172 22
 # in vagrant VM
 tail -f /var/log/kern.log
 
-Apr 22 02:46:49 vagrant kernel: [  152.239790] tcpriv[info]: tcpriv found local in TCP syn packet from 192.168.1.186.
-Apr 22 02:46:49 vagrant kernel: [  152.239811] tcpriv[info]: tcpriv found client process information: 63889:2000
-Apr 22 02:46:49 vagrant kernel: [  152.239833] tcpriv[info]: tcpriv found local out TCP syn packet from 192.168.1.172.
+Apr 22 02:46:49 vagrant kernel: [0] tcpriv[info]: tcpriv found local in TCP syn packet from 192.168.1.186.
+Apr 22 02:46:49 vagrant kernel: [1] tcpriv[info]: tcpriv found client process information: 63889:2000
+Apr 22 02:46:49 vagrant kernel: [3] tcpriv[info]: tcpriv found local out TCP syn packet from 192.168.1.172.
 ```
