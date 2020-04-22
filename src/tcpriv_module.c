@@ -10,9 +10,12 @@
 #include <linux/udp.h>
 #include <linux/static_key.h>
 #include <net/tcp.h>
-/* don't implement MPTCP options in 4.15.0-76-generic */
-//#include <net/mptcp.h>
 #include <asm-generic/unaligned.h>
+
+/* don't implement MPTCP options in 4.15.0-76-generic */
+#if IS_ENABLED(CONFIG_MPTCP)
+#include <net/mptcp.h>
+#endif
 
 MODULE_AUTHOR("matsumotory: Ryosuke Matsumoto");
 MODULE_DESCRIPTION("An Access Control Architecture Separating Privilege Transparently via TCP Connection Based on "
@@ -81,7 +84,9 @@ static struct tcp_out_options {
   __u32 tsval, tsecr;                          /* need to include OPTION_TS */
   struct tcp_fastopen_cookie *fastopen_cookie; /* Fast open cookie */
   /* don't implement MPTCP options in 4.15.0-76-generic */
-  //  struct mptcp_out_options mptcp;
+#if IS_ENABLED(CONFIG_MPTCP)
+  struct mptcp_out_options mptcp;
+#endif
 };
 
 /* TCP write tcpriv option functions */
