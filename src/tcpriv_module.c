@@ -27,11 +27,12 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 #define TCPRIV_INFO "tcpriv[info]: "
 
 /* same as OPTION_TS: __u32 tsval, tsecr; */
+/* but, use 8 bytes for tcpriv length */
 #define TCPOLEN_EXP_TCPRIV_BASE 10
+#define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 12
 
 /* ref: https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml */
 #define TCPOPT_TCPRIV_MAGIC 0xF991
-#define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 12
 
 #define OPTION_SACK_ADVERTISE (1 << 0)
 #define OPTION_TS (1 << 1)
