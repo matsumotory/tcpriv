@@ -19,7 +19,6 @@ vagrant up
 # on one terminal
 vagrant ssh client
 
-
 # on another terminal
 vagrant ssh server
 ```
@@ -52,7 +51,7 @@ dmesg | tail
 vagrant up
 vagrant ssh server
 
-# in vagrant VM
+# in vagrant server VM
 cd ~/tcpriv/build/kernel_module
 sudo insmod tcpriv_module.ko
 tail -f /var/log/kern.log
@@ -64,7 +63,7 @@ tail -f /var/log/kern.log
 # in host
 vagrant ssh client
 
-# in vagrant VM
+# in vagrant client VM
 cd ~/tcpriv/build/kernel_module
 sudo insmod tcpriv_module.ko
 telnet 192.168.0.3 22
@@ -80,7 +79,7 @@ telnet     1000  1000
 # in host
 vagrant ssh server
 
-# in vagrant VM
+# in vagrant server VM
 tail -f /var/log/kern.log
 
 Apr 22 05:16:23 vagrant kernel: [543] tcpriv[info]: found local in TCP syn packet from 192.168.0.2
