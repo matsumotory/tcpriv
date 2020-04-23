@@ -83,6 +83,6 @@ vagrant ssh server
 tail -f /var/log/kern.log
 
 Apr 22 05:16:23 vagrant kernel: [543] tcpriv[info]: found local in TCP syn packet from 192.168.0.2
-Apr 22 05:16:23 vagrant kernel: [566] tcpriv[info]: found client process info: uid=1000 gid=1000
+Apr 22 05:16:23 vagrant kernel: [566] tcpriv[info]: found client process info: uid=1000 gid=1000 << Wow!!!!
 Apr 22 05:16:23 vagrant kernel: [587] tcpriv[info]: found local out TCP syn packet from 192.168.0.3
 ```
