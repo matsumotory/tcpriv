@@ -13,7 +13,15 @@ Now under depelopment.
 - setup build enviroment
 
 ```
+# Support mutliple vm building
 vagrant up
+
+# on one terminal
+vagrant ssh client
+
+
+# on another terminal
+vagrant ssh server
 ```
 
 all setup phase was provisioned automatically by `misc/provision.sh` such as installing packages, setup kernel module enviroment, building kernel module and insmod/rmmod tcpriv as a kernel module.
@@ -29,23 +37,6 @@ dmesg | tail
 [587] tcpriv[info]: found local out TCP syn packet from 192.168.1.172.
 ```
 
-
-## Build and run
-
-```
-vagrant ssh
-```
-
-- in ubuntu 18.04
-
-```
-cd tcpriv/build
-make
-sudo insmod tcpriv_module.ko
-dmesg | tail
-sudo rmmod tcpriv_module.ko
-```
-
 ## Experiment
 
 #### Remote servers get process information like uid/gid from a client server process transparently
@@ -54,12 +45,12 @@ sudo rmmod tcpriv_module.ko
   <img alt="tcpriv flow" src="https://github.com/matsumotory/tcpriv/blob/master/misc/figures/tcpriv-flow.png?raw=true" width="800">
 </p>
 
-#### 1. A remote server (192.168.1.172)
+#### 1. A remote server (192.168.0.3)
 
 ```
 # in host
 vagrant up
-vagrant ssh
+vagrant ssh server
 
 # in vagrant VM
 cd ~/tcpriv/build/kernel_module
@@ -67,30 +58,32 @@ sudo insmod tcpriv_module.ko
 tail -f /var/log/kern.log
 ```
 
-#### 2. A client server (192.168.1.186)
+#### 2. A client server (192.168.0,2)
 
 ```
 # in host
-vagrant up
-vagrant ssh
+vagrant ssh client
 
 # in vagrant VM
 cd ~/tcpriv/build/kernel_module
 sudo insmod tcpriv_module.ko
-telnet 192.168.1.172 22
+telnet 192.168.0.3 22
 
 # check uid/gid
 ps -o cmd,uid,gid | grep telnet
 telnet     1000  1000
 ```
 
-#### 3. The remote server (192.168.1.172)
+#### 3. The remote server (192.168.0.3)
 
 ```
+# in host
+vagrant ssh server
+
 # in vagrant VM
 tail -f /var/log/kern.log
 
-Apr 22 05:16:23 vagrant kernel: [543] tcpriv[info]: found local in TCP syn packet from 192.168.1.186.
+Apr 22 05:16:23 vagrant kernel: [543] tcpriv[info]: found local in TCP syn packet from 192.168.0.2
 Apr 22 05:16:23 vagrant kernel: [566] tcpriv[info]: found client process info: uid=1000 gid=1000
-Apr 22 05:16:23 vagrant kernel: [587] tcpriv[info]: found local out TCP syn packet from 192.168.1.172.
+Apr 22 05:16:23 vagrant kernel: [587] tcpriv[info]: found local out TCP syn packet from 192.168.0.3
 ```
