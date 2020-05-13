@@ -185,7 +185,7 @@ static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_rec
     u32 uid, gid;
     uid = get_unaligned_be32(ptr + 4);
     gid = get_unaligned_be32(ptr + 8);
-    printk(KERN_INFO TCPRIV_INFO "found client process info: uid=%d gid=%d\n", uid, gid);
+    printk(KERN_INFO TCPRIV_INFO "found client process info: uid=%u gid=%u\n", uid, gid);
   }
 }
 
