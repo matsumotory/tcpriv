@@ -10,6 +10,8 @@
 #include <linux/udp.h>
 #include <linux/static_key.h>
 #include <linux/cred.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 #include <net/tcp.h>
 #include <asm-generic/unaligned.h>
 
