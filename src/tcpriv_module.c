@@ -403,6 +403,9 @@ static int tcpriv_proc_open(struct inode *inode, struct file *file)
 static const struct file_operations tcpriv_proc_ops = {
     .owner = THIS_MODULE,
     .open = tcpriv_proc_open,
+    .read = seq_read,
+    .llseek = seq_lseek,
+    .release = single_release,
 };
 
 static int __init tcpriv_init(void)
@@ -412,7 +415,7 @@ static int __init tcpriv_init(void)
   printk(KERN_INFO TCPRIV_INFO "An Access Control Architecture Separating Privilege Transparently via TCP Connection "
                                "Based on Process Information\n");
 
-  entry = proc_create("tcpriv", 0660, NULL, &tcpriv_proc_ops);
+  entry = proc_create("tcpriv", 0444, NULL, &tcpriv_proc_ops);
   if (!entry) {
     printk(KERN_INFO TCPRIV_INFO "can not create /proc/tcpriv");
     return -ENOMEM;
