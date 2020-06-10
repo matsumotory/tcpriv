@@ -71,6 +71,9 @@ telnet 192.168.0.3 22
 # check uid/gid
 ps -o cmd,uid,gid | grep telnet
 telnet     1000  1000
+
+# change uid
+sudo -u "#4294967294" nc -vz 192.168.0.3 22
 ```
 
 #### 3. The remote server (192.168.0.3)
@@ -85,4 +88,9 @@ tail -f /var/log/kern.log
 Apr 22 05:16:23 vagrant kernel: [543] tcpriv[info]: found local in TCP syn packet from 192.168.0.2
 Apr 22 05:16:23 vagrant kernel: [566] tcpriv[info]: found client process info: uid=1000 gid=1000 << Wow!!!!
 Apr 22 05:16:23 vagrant kernel: [587] tcpriv[info]: found local out TCP syn packet from 192.168.0.3
+
+May 13 07:43:32 server kernel: [788] tcpriv[info]: found local in TCP syn packet from 192.168.0.2.
+May 13 07:43:32 server kernel: [804] tcpriv[info]: found client process info: uid=4294967294 gid=1000 << Wow!!!!
+May 13 07:43:32 server kernel: [821] tcpriv[info]: found local out TCP syn packet from 192.168.0.3.
+
 ```
