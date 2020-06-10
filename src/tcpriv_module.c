@@ -389,19 +389,15 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
   return NF_ACCEPT;
 }
 
-static ssize_t tcpriv_proc_open(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
+static int tcpriv_proc_show(struct seq_file *s, void *data)
 {
-  char buf[100];
-  int len = 0;
+  sq_printf(s, "tcpriv file\n");
+  return 0;
+}
 
-  len += sprintf(buf, "tcpriv file\n");
-
-  if (copy_to_user(ubuf, buf, len))
-    return -EFAULT;
-
-  *ppos = len;
-
-  return len;
+static ssize_t tcpriv_proc_open(struct inode *inode, struct file *file)
+{
+  return single_open(file, tcpriv_proc_show, PDE_DATA(inode));
 }
 
 static const struct file_operations tcpriv_proc_ops = {
