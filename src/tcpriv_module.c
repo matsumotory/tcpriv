@@ -385,6 +385,26 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
   return NF_ACCEPT;
 }
 
+static size_t tcpriv_proc_read(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
+{
+  char buf[100];
+  int len = 0;
+
+  len += sprintf(buf, "tcpriv file\n");
+
+  if (copy_to_user(ubuf, buf, len))
+    return -EFAULT;
+
+  *ppos = len;
+
+  return len;
+}
+
+static struct file_operations tcpriv_proc_ops = {
+    .owner = THIS_MODULE,
+    .read = tcpriv_proc_read,
+};
+
 static int __init tcpriv_init(void)
 {
   struct proc_dir_entry *entry;
@@ -393,7 +413,7 @@ static int __init tcpriv_init(void)
   printk(KERN_INFO TCPRIV_INFO "An Access Control Architecture Separating Privilege Transparently via TCP Connection "
                                "Based on Process Information\n");
 
-  entry = proc_create("tcpriv", NULL);
+  entry = proc_create("tcpriv", 0660, NULL, &tcpriv_proc_ops);
   if (!entry) {
     printk(KERN_INFO TCPRIV_INFO "can not create /proc/tcpriv");
     return -ENOMEM;
@@ -422,7 +442,7 @@ static void __exit tcpriv_exit(void)
   nf_unregister_net_hook(&init_net, &nfho_in);
   nf_unregister_net_hook(&init_net, &nfho_out);
 
-  proc_remove("tcpriv", NULL);
+  proc_remove("tcpriv");
 
   printk(KERN_INFO TCPRIV_INFO "close\n");
 }
