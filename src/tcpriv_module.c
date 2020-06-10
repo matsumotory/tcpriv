@@ -97,6 +97,8 @@ static struct tcp_out_options {
 #endif
 };
 
+struct proc_dir_entry *entry;
+
 /* TCP write tcpriv option functions */
 /* ref: https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_output.c#L457 */
 
@@ -387,7 +389,7 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
   return NF_ACCEPT;
 }
 
-static size_t tcpriv_proc_read(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
+static ssize_t tcpriv_proc_read(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
 {
   char buf[100];
   int len = 0;
@@ -402,14 +404,13 @@ static size_t tcpriv_proc_read(struct file *file, char __user *ubuf, size_t coun
   return len;
 }
 
-static struct file_operations tcpriv_proc_ops = {
+static const struct file_operations tcpriv_proc_ops = {
     .owner = THIS_MODULE,
     .read = tcpriv_proc_read,
 };
 
 static int __init tcpriv_init(void)
 {
-  struct proc_dir_entry *entry;
 
   printk(KERN_INFO TCPRIV_INFO "open\n");
   printk(KERN_INFO TCPRIV_INFO "An Access Control Architecture Separating Privilege Transparently via TCP Connection "
@@ -444,7 +445,7 @@ static void __exit tcpriv_exit(void)
   nf_unregister_net_hook(&init_net, &nfho_in);
   nf_unregister_net_hook(&init_net, &nfho_out);
 
-  proc_remove("tcpriv");
+  proc_remove(entry);
 
   printk(KERN_INFO TCPRIV_INFO "close\n");
 }
