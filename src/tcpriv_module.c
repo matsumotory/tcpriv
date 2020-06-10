@@ -387,9 +387,17 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
 
 static int __init tcpriv_init(void)
 {
+  struct proc_dir_entry *entry;
+
   printk(KERN_INFO TCPRIV_INFO "open\n");
   printk(KERN_INFO TCPRIV_INFO "An Access Control Architecture Separating Privilege Transparently via TCP Connection "
                                "Based on Process Information\n");
+
+  entry = proc_create("tcpriv", NULL);
+  if (!entry) {
+    printk(KERN_INFO TCPRIV_INFO "can not create /proc/tcpriv");
+    return -ENOMEM;
+  }
 
   nfho_in.hook = hook_local_in_func;
   nfho_in.hooknum = NF_INET_LOCAL_IN;
@@ -410,8 +418,12 @@ static int __init tcpriv_init(void)
 
 static void __exit tcpriv_exit(void)
 {
+
   nf_unregister_net_hook(&init_net, &nfho_in);
   nf_unregister_net_hook(&init_net, &nfho_out);
+
+  proc_remove("tcpriv", NULL);
+
   printk(KERN_INFO TCPRIV_INFO "close\n");
 }
 
