@@ -391,11 +391,11 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
 
 static int tcpriv_proc_show(struct seq_file *s, void *data)
 {
-  sq_printf(s, "tcpriv file\n");
+  seq_printf(s, "tcpriv file\n");
   return 0;
 }
 
-static ssize_t tcpriv_proc_open(struct inode *inode, struct file *file)
+static int tcpriv_proc_open(struct inode *inode, struct file *file)
 {
   return single_open(file, tcpriv_proc_show, PDE_DATA(inode));
 }
