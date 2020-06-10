@@ -389,7 +389,7 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
   return NF_ACCEPT;
 }
 
-static ssize_t tcpriv_proc_read(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
+static ssize_t tcpriv_proc_open(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
 {
   char buf[100];
   int len = 0;
@@ -406,7 +406,7 @@ static ssize_t tcpriv_proc_read(struct file *file, char __user *ubuf, size_t cou
 
 static const struct file_operations tcpriv_proc_ops = {
     .owner = THIS_MODULE,
-    .read = tcpriv_proc_read,
+    .open = tcpriv_proc_open,
 };
 
 static int __init tcpriv_init(void)
