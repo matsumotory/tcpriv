@@ -389,37 +389,262 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
   return NF_ACCEPT;
 }
 
-static int tcpriv_proc_show(struct seq_file *s, void *data)
+/* /proc/net/tcpriv functions */
+
+/* ref: https://github.com/veithen/knetstat/blob/master/knetstat.c
+ * Thank you for your great work, knetstat.c! */
+
+static const char *const tcp_state_names[] = {"NONE", "ESTB", "SYNS", "SYNR", "FNW1", "FNW2", "TIMW",
+                                              "CLSD", "CLSW", "LACK", "LSTN", "CLSG", "SYNR"};
+
+static void sock_common_options_show(struct seq_file *seq, struct sock *sk)
 {
-  seq_printf(s, "tcpriv file\n");
+  // Note:
+  //  * Linux actually doubles the values for SO_RCVBUF and SO_SNDBUF (see sock_setsockopt in net/core/sock.c)
+  //  * If these options are not set explicitly, the kernel may dynamically scale the buffer sizes
+  if (sk->sk_userlocks & SOCK_RCVBUF_LOCK) {
+    seq_printf(seq, ",SO_RCVBUF=%d", sk->sk_rcvbuf / 2);
+  }
+  if (sk->sk_userlocks & SOCK_SNDBUF_LOCK) {
+    seq_printf(seq, ",SO_SNDBUF=%d", sk->sk_sndbuf / 2);
+  }
+
+  if (sk->sk_rcvtimeo != MAX_SCHEDULE_TIMEOUT) {
+    seq_printf(seq, ",SO_RCVTIMEO=%ldms", sk->sk_rcvtimeo * 1000 / HZ);
+  }
+  if (sk->sk_sndtimeo != MAX_SCHEDULE_TIMEOUT) {
+    seq_printf(seq, ",SO_SNDTIMEO=%ldms", sk->sk_sndtimeo * 1000 / HZ);
+  }
+
+  if (sock_flag(sk, SOCK_LINGER)) {
+    seq_printf(seq, ",SO_LINGER=%lds", sk->sk_lingertime / HZ);
+  }
+}
+
+static void addr_port_show(struct seq_file *seq, sa_family_t family, const void *addr, __u16 port)
+{
+  seq_setwidth(seq, 23);
+  seq_printf(seq, family == AF_INET6 ? "%pI6c" : "%pI4", addr);
+  if (port == 0) {
+    seq_puts(seq, ":*");
+  } else {
+    seq_printf(seq, ":%d", port);
+  }
+  seq_pad(seq, ' ');
+}
+
+static int tcp_seq_show(struct seq_file *seq, void *v)
+{
+  if (v == SEQ_START_TOKEN) {
+    seq_printf(seq, "TCPRIV Information\n");
+  } else {
+
+    struct tcp_iter_state *st = seq->private;
+    struct tcp_seq_afinfo *afinfo = PDE_DATA(file_inode(seq->file));
+    sa_family_t family = afinfo->family;
+
+    int rx_queue;
+    int tx_queue;
+    const void *dest;
+    const void *src;
+    __u16 destp;
+    __u16 srcp;
+    int state;
+    struct sock *sk;
+    int fo_qlen = 0;
+    u8 defer = 0;
+
+    switch (st->state) {
+    case TCP_SEQ_STATE_LISTENING:
+    case TCP_SEQ_STATE_ESTABLISHED: {
+
+      sk = v;
+
+      if (sk->sk_state == TCP_TIME_WAIT) {
+
+        const struct inet_timewait_sock *tw = v;
+
+        rx_queue = 0;
+        tx_queue = 0;
+
+        if (family == AF_INET6) {
+          dest = &tw->tw_v6_daddr;
+          src = &tw->tw_v6_rcv_saddr;
+        } else {
+          dest = &tw->tw_daddr;
+          src = &tw->tw_rcv_saddr;
+        }
+
+        destp = ntohs(tw->tw_dport);
+        srcp = ntohs(tw->tw_sport);
+        state = tw->tw_substate;
+        sk = NULL;
+
+      } else {
+
+        const struct tcp_sock *tp;
+        const struct inet_sock *inet;
+        const struct fastopen_queue *fq;
+
+        tp = tcp_sk(sk);
+        inet = inet_sk(sk);
+        defer = inet_csk(sk)->icsk_accept_queue.rskq_defer_accept;
+
+        switch (sk->sk_state) {
+        case TCP_LISTEN:
+
+          rx_queue = sk->sk_ack_backlog;
+          tx_queue = 0;
+          fq = &inet_csk(sk)->icsk_accept_queue.fastopenq;
+
+          if (fq != NULL) {
+            fo_qlen = fq->max_qlen;
+          }
+
+          break;
+        case TCP_NEW_SYN_RECV:
+
+          rx_queue = 0;
+          tx_queue = 0;
+
+          break;
+
+        default:
+          rx_queue = max_t(int, tp->rcv_nxt - tp->copied_seq, 0);
+          tx_queue = tp->write_seq - tp->snd_una;
+        }
+
+        if (family == AF_INET6) {
+          dest = &sk->sk_v6_daddr;
+          src = &sk->sk_v6_rcv_saddr;
+        } else {
+          dest = &inet->inet_daddr;
+          src = &inet->inet_rcv_saddr;
+        }
+
+        destp = ntohs(inet->inet_dport);
+        srcp = ntohs(inet->inet_sport);
+        state = sk->sk_state;
+
+        if (sk->sk_state == TCP_NEW_SYN_RECV) {
+          sk = NULL;
+        }
+      }
+      break;
+    }
+
+    default:
+      return 0;
+    }
+
+    if (state < 0 || state >= TCP_MAX_STATES) {
+      state = 0;
+    }
+
+    seq_printf(seq, "%6d %6d ", rx_queue, tx_queue);
+    addr_port_show(seq, family, src, srcp);
+    addr_port_show(seq, family, dest, destp);
+    seq_printf(seq, "%s ", tcp_state_names[state]);
+
+    if (sk != NULL) {
+
+      seq_setwidth(seq, 4);
+
+      if (state == TCP_ESTABLISHED) {
+
+        const struct tcp_sock *tp = tcp_sk(sk);
+
+        if (tp->rcv_wnd == 0 && tp->snd_wnd == 0) {
+          // Both receiver and sender windows are 0; we can neither receive nor send more data
+          seq_puts(seq, ">|<");
+        } else if (tp->rcv_wnd == 0) {
+          // Receiver window is 0; we cannot receive more data
+          seq_puts(seq, "|<");
+        } else if (tp->snd_wnd == 0) {
+          // Sender window is 0; we cannot send more data
+          seq_puts(seq, ">|");
+        } else if (tp->snd_nxt > tp->snd_una && tcp_time_stamp - tp->rcv_tstamp > HZ) {
+          // There are unacknowledged packets and the last ACK was received more than 1 second ago;
+          // this is an indication for network problems
+          seq_puts(seq, ">#");
+        }
+      }
+      seq_pad(seq, ' ');
+
+      seq_printf(seq, "SO_REUSEADDR=%d,SO_REUSEPORT=%d,SO_KEEPALIVE=%d", sk->sk_reuse, sk->sk_reuseport,
+                 sock_flag(sk, SOCK_KEEPOPEN));
+
+      if (tcp_sk(sk)->keepalive_time > 0) {
+        seq_printf(seq, ",TCP_KEEPIDLE=%u", tcp_sk(sk)->keepalive_time / HZ);
+      }
+
+      if (tcp_sk(sk)->keepalive_probes > 0) {
+        seq_printf(seq, ",TCP_KEEPCNT=%u", tcp_sk(sk)->keepalive_probes);
+      }
+
+      if (tcp_sk(sk)->keepalive_intvl > 0) {
+        seq_printf(seq, ",TCP_KEEPINTVL=%u", tcp_sk(sk)->keepalive_intvl / HZ);
+      }
+
+      sock_common_options_show(seq, sk);
+
+      seq_printf(seq, ",TCP_NODELAY=%d", !!(tcp_sk(sk)->nonagle & TCP_NAGLE_OFF));
+
+      if (state == TCP_LISTEN) {
+        seq_printf(seq, ",TCP_FASTOPEN=%d", fo_qlen);
+      }
+
+      seq_printf(seq, ",TCP_DEFER_ACCEPT=%d", defer);
+    }
+
+    seq_printf(seq, "\n");
+  }
   return 0;
 }
 
-static int tcpriv_proc_open(struct inode *inode, struct file *file)
+static const struct seq_operations tcpriv_seq_ops = {
+    .show = tcp_seq_show,
+    .start = tcp_seq_start,
+    .next = tcp_seq_next,
+    .stop = tcp_seq_stop,
+};
+
+static struct tcp_seq_afinfo tcpriv_seq_afinfo = {
+    .family = AF_INET,
+};
+
+static int __net_init tcpriv_net_init(struct net *net)
 {
-  return single_open(file, tcpriv_proc_show, PDE_DATA(inode));
+  if (!proc_create_net_data("tcpriv", 0444, net->proc_net, &tcpriv_seq_ops, sizeof(struct tcp_iter_state),
+                            &tcpriv_seq_afinfo)) {
+    remove_proc_entry("tcpriv", net->proc_net);
+    return -ENOMEM;
+  }
+
+  return 0;
 }
 
-static const struct file_operations tcpriv_proc_ops = {
-    .owner = THIS_MODULE,
-    .open = tcpriv_proc_open,
-    .read = seq_read,
-    .llseek = seq_lseek,
-    .release = single_release,
+static void __net_exit tcpriv_net_exit(struct net *net)
+{
+  remove_proc_entry("tcpriv", net->proc_net);
+}
+
+static struct pernet_operations tcpriv_net_ops = {
+    .init = tcpriv_net_init,
+    .exit = tcpriv_net_exit,
 };
 
 static int __init tcpriv_init(void)
 {
+  int ret;
 
   printk(KERN_INFO TCPRIV_INFO "open\n");
   printk(KERN_INFO TCPRIV_INFO "An Access Control Architecture Separating Privilege Transparently via TCP Connection "
                                "Based on Process Information\n");
 
-  entry = proc_create("tcpriv", 0444, NULL, &tcpriv_proc_ops);
-  if (!entry) {
-    printk(KERN_INFO TCPRIV_INFO "can not create /proc/tcpriv");
-    return -ENOMEM;
-  }
+  ret = register_pernet_subsys(&tcpriv_net_ops);
+  if (ret < 0)
+    return ret;
 
   nfho_in.hook = hook_local_in_func;
   nfho_in.hooknum = NF_INET_LOCAL_IN;
@@ -440,11 +665,10 @@ static int __init tcpriv_init(void)
 
 static void __exit tcpriv_exit(void)
 {
-
   nf_unregister_net_hook(&init_net, &nfho_in);
   nf_unregister_net_hook(&init_net, &nfho_out);
 
-  proc_remove(entry);
+  unregister_pernet_subsys(&tcpriv_net_ops);
 
   printk(KERN_INFO TCPRIV_INFO "close\n");
 }
