@@ -52,6 +52,8 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 /* 1 << 10 was used by MPTCP */
 #define OPTION_TCPRIV (1 << 11)
 
+#define tcp_time_stamp tcp_time_stamp_raw()
+
 /*
  *     TCP option lengths
  */
