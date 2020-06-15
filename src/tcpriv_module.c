@@ -370,8 +370,8 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
     if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
       printk(KERN_INFO TCPRIV_INFO "found local in TCP syn packet from %pI4.\n", &iphdr->saddr);
 
-      trinfo.uid = -1;
-      trinfo.gid = -1;
+      trinfo.uid = 0;
+      trinfo.gid = 0;
       trinfo.sk_tcpriv = 0;
 
       state->sk->sk_user_data = &trinfo;
