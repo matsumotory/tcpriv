@@ -105,7 +105,7 @@ static struct tcp_out_options {
 };
 
 static struct tcpriv_info {
-  __u32 uid, gid;
+  u32 uid, gid;
   unsigned int sk_tcpriv : 1;
 };
 
@@ -192,11 +192,11 @@ static void tcpriv_tcp_options_write(__be32 *ptr, struct tcp_sock *tp, struct tc
 
 /* TCP parse tcpriv option functions */
 static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_received *opt_rx, const unsigned char *ptr,
-                                 int opsize, struct sock *sk)
+                                 int opsize, const struct nf_hook_state *state)
 {
   if (th->syn && !(opsize & 1) && opsize >= TCPOLEN_EXP_TCPRIV_BASE && get_unaligned_be32(ptr) == TCPOPT_TCPRIV_MAGIC) {
     /* TODO: check tcpriv information */
-    struct tcpriv_info *trinfo = (struct tcpriv_info *)sk->sk_user_data;
+    struct tcpriv_info *trinfo = (struct tcpriv_info *)state->sk->sk_user_data;
 
     trinfo->sk_tcpriv = 1;
     trinfo->uid = get_unaligned_be32(ptr + 4);
@@ -208,7 +208,7 @@ static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_rec
 
 /* ref: https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_input.c#L3839 */
 void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, struct tcp_options_received *opt_rx,
-                              int estab, struct tcp_fastopen_cookie *foc, struct sock *sk)
+                              int estab, struct tcp_fastopen_cookie *foc, const struct nf_hook_state *state)
 {
   const unsigned char *ptr;
   const struct tcphdr *th = tcp_hdr(skb);
@@ -245,7 +245,7 @@ void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, 
                    get_unaligned_be16(ptr) == TCPOPT_SMC_MAGIC) {
           // do nothing
         } else {
-          tcpriv_parse_options(th, opt_rx, ptr, opsize, sk);
+          tcpriv_parse_options(th, opt_rx, ptr, opsize, state);
         }
 
         break;
@@ -382,7 +382,7 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
       /* parse tcp options and store tmp_opt buffer */
       memset(&tmp_opt, 0, sizeof(tmp_opt));
       tcpriv_tcp_clear_options(&tmp_opt);
-      tcpriv_tcp_parse_options(&init_net, skb, &tmp_opt, 0, NULL, state->sk);
+      tcpriv_tcp_parse_options(&init_net, skb, &tmp_opt, 0, NULL, state);
     }
   }
 
