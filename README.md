@@ -66,14 +66,21 @@ vagrant ssh client
 # in vagrant client VM
 cd ~/tcpriv/build/kernel_module
 sudo insmod tcpriv_module.ko
-telnet 192.168.0.3 22
 
 # check uid/gid
-ps -o cmd,uid,gid | grep telnet
-telnet     1000  1000
+id
+# uid=1000(vagrant) gid=1000(vagrant) groups=1000(vagrant),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),111(lxd),118(lpadmin),119(sambashare)
+
+# access tcp port
+nc -vz 192.168.0.3 22
+# Connection to 192.168.0.3 22 port [tcp/ssh] succeeded!
 
 # change uid
-sudo -u "#4294967294" nc -vz 192.168.0.3 22
+id sshd
+# uid=111(sshd) gid=65534(nogroup) groups=65534(nogroup)
+
+sudo -u sshd nc -vz 192.168.0.3 22
+# Connection to 192.168.0.3 22 port [tcp/ssh] succeeded!
 ```
 
 #### 3. The remote server (192.168.0.3)
@@ -90,7 +97,7 @@ Apr 22 05:16:23 vagrant kernel: [566] tcpriv[info]: found client process info: u
 Apr 22 05:16:23 vagrant kernel: [587] tcpriv[info]: found local out TCP syn packet from 192.168.0.3
 
 May 13 07:43:32 server kernel: [788] tcpriv[info]: found local in TCP syn packet from 192.168.0.2.
-May 13 07:43:32 server kernel: [804] tcpriv[info]: found client process info: uid=4294967294 gid=1000 << Wow!!!!
+May 13 07:43:32 server kernel: [804] tcpriv[info]: found client process info: uid=111 gid=65534 << Wow!!!!
 May 13 07:43:32 server kernel: [821] tcpriv[info]: found local out TCP syn packet from 192.168.0.3.
 
 ```
