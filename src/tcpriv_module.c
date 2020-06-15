@@ -364,14 +364,20 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
   struct iphdr *iphdr = ip_hdr(skb);
   struct tcphdr *tcphdr = tcp_hdr(skb);
   struct tcp_options_received tmp_opt;
-  struct tcpriv_info trinfo;
+  struct tcpriv_info *trinfo;
+  int err;
 
   if (iphdr->version == 4) {
     if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
       printk(KERN_INFO TCPRIV_INFO "found local in TCP syn packet from %pI4.\n", &iphdr->saddr);
 
-      memset(&trinfo, 0, sizeof(trinfo));
-      state->sk->sk_user_data = &trinfo;
+      trinfo = kzalloc(sizeof(*trinfo), GFP_KERNEL);
+      if (!trinfo) {
+        err = -ENOMEM;
+        goto error;
+      }
+
+      state->sk->sk_user_data = trinfo;
 
       /* parse tcp options and store tmp_opt buffer */
       memset(&tmp_opt, 0, sizeof(tmp_opt));
@@ -381,6 +387,10 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
   }
 
   return NF_ACCEPT;
+
+error:
+  kfree(trinfo);
+  return err;
 }
 
 static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
