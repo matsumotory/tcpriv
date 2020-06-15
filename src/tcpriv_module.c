@@ -371,7 +371,7 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
     if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
       printk(KERN_INFO TCPRIV_INFO "found local in TCP syn packet from %pI4.\n", &iphdr->saddr);
 
-      trinfo = kzalloc(sizeof(*trinfo), GFP_KERNEL);
+      trinfo = (struct tcpriv_info *)kzalloc(sizeof(struct tcpriv_info), GFP_KERNEL);
       if (!trinfo) {
         err = -ENOMEM;
         goto error;
