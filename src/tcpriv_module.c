@@ -1,3 +1,4 @@
+#include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -6,13 +7,17 @@
 #include <linux/ip.h>
 #include <linux/string.h>
 #include <linux/inet.h>
-#include <linux/tcp.h>
 #include <linux/udp.h>
 #include <linux/static_key.h>
 #include <linux/cred.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
+#include <linux/types.h>
+
 #include <net/tcp.h>
+#include <net/tcp_states.h>
+#include <net/net_namespace.h>
+
 #include <asm-generic/unaligned.h>
 
 /* don't implement MPTCP options in 4.15.0-76-generic */
