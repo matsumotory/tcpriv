@@ -105,7 +105,7 @@ static struct tcp_out_options {
 };
 
 static struct tcpriv_info {
-  __u32 uig, gid;
+  __u32 uid, gid;
   unsigned int sk_tcpriv : 1;
 };
 
