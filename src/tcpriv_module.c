@@ -82,8 +82,8 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 //#define MAX_TCP_OPTION_SPACE 40
 
 /* net/ipv4/tcp_ipv4.c: RFC2385 MD5 checksumming requires a mapping of IP address->MD5 Key.*/
-//DEFINE_STATIC_KEY_FALSE(tcp_md5_needed);
-//EXPORT_SYMBOL(tcp_md5_needed);
+// DEFINE_STATIC_KEY_FALSE(tcp_md5_needed);
+// EXPORT_SYMBOL(tcp_md5_needed);
 
 static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
@@ -104,7 +104,10 @@ static struct tcp_out_options {
 #endif
 };
 
-struct proc_dir_entry *entry;
+static struct tcpriv_info {
+  __u32 uig, gid;
+  unsigned int sk_tcpriv : 1;
+};
 
 /* TCP write tcpriv option functions */
 /* ref: https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_output.c#L457 */
@@ -189,20 +192,23 @@ static void tcpriv_tcp_options_write(__be32 *ptr, struct tcp_sock *tp, struct tc
 
 /* TCP parse tcpriv option functions */
 static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_received *opt_rx, const unsigned char *ptr,
-                                 int opsize)
+                                 int opsize, struct sock *sk)
 {
   if (th->syn && !(opsize & 1) && opsize >= TCPOLEN_EXP_TCPRIV_BASE && get_unaligned_be32(ptr) == TCPOPT_TCPRIV_MAGIC) {
     /* TODO: check tcpriv information */
-    u32 uid, gid;
-    uid = get_unaligned_be32(ptr + 4);
-    gid = get_unaligned_be32(ptr + 8);
-    printk(KERN_INFO TCPRIV_INFO "found client process info: uid=%u gid=%u\n", uid, gid);
+    struct tcpriv_info *trinfo = (struct tcpriv_info *)sk->sk_user_data;
+
+    trinfo->sk_tcpriv = 1;
+    trinfo->uid = get_unaligned_be32(ptr + 4);
+    trinfo->gid = get_unaligned_be32(ptr + 8);
+
+    printk(KERN_INFO TCPRIV_INFO "found client process info: uid=%u gid=%u\n", trinfo->uid, trinfo->gid);
   }
 }
 
 /* ref: https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_input.c#L3839 */
 void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, struct tcp_options_received *opt_rx,
-                              int estab, struct tcp_fastopen_cookie *foc)
+                              int estab, struct tcp_fastopen_cookie *foc, struct sock *sk)
 {
   const unsigned char *ptr;
   const struct tcphdr *th = tcp_hdr(skb);
@@ -239,7 +245,7 @@ void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, 
                    get_unaligned_be16(ptr) == TCPOPT_SMC_MAGIC) {
           // do nothing
         } else {
-          tcpriv_parse_options(th, opt_rx, ptr, opsize);
+          tcpriv_parse_options(th, opt_rx, ptr, opsize, sk);
         }
 
         break;
@@ -358,15 +364,22 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
   struct iphdr *iphdr = ip_hdr(skb);
   struct tcphdr *tcphdr = tcp_hdr(skb);
   struct tcp_options_received tmp_opt;
+  struct tcpriv_info trinfo;
 
   if (iphdr->version == 4) {
     if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
       printk(KERN_INFO TCPRIV_INFO "found local in TCP syn packet from %pI4.\n", &iphdr->saddr);
 
+      trinfo.uid = -1;
+      trinfo.gid = -1;
+      trinfo.sk_tcpriv = 0;
+
+      state->sk->sk_user_data = &trinfo;
+
       /* parse tcp options and store tmp_opt buffer */
       memset(&tmp_opt, 0, sizeof(tmp_opt));
       tcpriv_tcp_clear_options(&tmp_opt);
-      tcpriv_tcp_parse_options(&init_net, skb, &tmp_opt, 0, NULL);
+      tcpriv_tcp_parse_options(&init_net, skb, &tmp_opt, 0, NULL, state->sk);
     }
   }
 
