@@ -367,22 +367,24 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
   struct tcpriv_info *trinfo;
   int err;
 
-  if (iphdr->version == 4) {
-    if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
-      printk(KERN_INFO TCPRIV_INFO "found local in TCP syn packet from %pI4.\n", &iphdr->saddr);
+  if (state->sk != NULL) {
+    if (iphdr->version == 4) {
+      if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
+        printk(KERN_INFO TCPRIV_INFO "found local in TCP syn packet from %pI4.\n", &iphdr->saddr);
 
-      trinfo = (struct tcpriv_info *)kzalloc(sizeof(struct tcpriv_info), GFP_KERNEL);
-      if (!trinfo) {
-        err = -ENOMEM;
-        goto error;
+        trinfo = (struct tcpriv_info *)kzalloc(sizeof(struct tcpriv_info), GFP_KERNEL);
+        if (!trinfo) {
+          err = -ENOMEM;
+          goto error;
+        }
+
+        state->sk->sk_user_data = trinfo;
+
+        /* parse tcp options and store tmp_opt buffer */
+        memset(&tmp_opt, 0, sizeof(tmp_opt));
+        tcpriv_tcp_clear_options(&tmp_opt);
+        tcpriv_tcp_parse_options(&init_net, skb, &tmp_opt, 0, NULL, state);
       }
-
-      state->sk->sk_user_data = trinfo;
-
-      /* parse tcp options and store tmp_opt buffer */
-      memset(&tmp_opt, 0, sizeof(tmp_opt));
-      tcpriv_tcp_clear_options(&tmp_opt);
-      tcpriv_tcp_parse_options(&init_net, skb, &tmp_opt, 0, NULL, state);
     }
   }
 
