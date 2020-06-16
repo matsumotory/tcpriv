@@ -344,7 +344,7 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
 
         skb->sk->sk_user_data = trinfo;
 
-        tcpriv_tcp_parse_options(&init_net, skb);
+        tcpriv_tcp_parse_options(skb);
       }
     }
   }
