@@ -207,8 +207,7 @@ static void tcpriv_parse_options(const struct tcphdr *th, const unsigned char *p
 }
 
 /* ref: https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_input.c#L3839 */
-void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, int estab,
-                              struct tcp_fastopen_cookie *foc)
+void tcpriv_tcp_parse_options(const struct sk_buff *skb)
 {
   const unsigned char *ptr;
   const struct tcphdr *th = tcp_hdr(skb);
@@ -325,39 +324,6 @@ static unsigned int tcpriv_tcp_syn_options(struct sock *sk, struct sk_buff *skb,
   return MAX_TCP_OPTION_SPACE - remaining;
 }
 
-// struct tcp_options_received {
-//  /*  PAWS/RTTM data  */
-//  int  ts_recent_stamp;/* Time we stored ts_recent (for aging) */
-//  u32  ts_recent;  /* Time stamp to echo next    */
-//  u32  rcv_tsval;  /* Time stamp value               */
-//  u32  rcv_tsecr;  /* Time stamp echo reply          */
-//  u16  saw_tstamp : 1,  /* Saw TIMESTAMP on last packet    */
-//      tstamp_ok : 1,  /* TIMESTAMP seen on SYN packet    */
-//      dsack : 1,  /* D-SACK is scheduled      */
-//      wscale_ok : 1,  /* Wscale seen on SYN packet    */
-//      sack_ok : 3,  /* SACK seen on SYN packet    */
-//      smc_ok : 1,  /* SMC seen on SYN packet    */
-//      snd_wscale : 4,  /* Window scaling received from sender  */
-//      rcv_wscale : 4;  /* Window scaling to send to receiver  */
-//  u8  num_sacks;  /* Number of SACK blocks    */
-//  u16  user_mss;  /* mss requested by user in ioctl  */
-//  u16  mss_clamp;  /* Maximal mss, negotiated at connection setup */
-//};
-
-static inline void tcpriv_tcp_clear_options(struct tcp_options_received *rx_opt)
-{
-  rx_opt->tstamp_ok = rx_opt->sack_ok = 0;
-  rx_opt->wscale_ok = rx_opt->snd_wscale = 0;
-#if IS_ENABLED(CONFIG_SMC)
-  rx_opt->smc_ok = 0;
-#endif
-#if IS_ENABLED(CONFIG_MPTCP)
-  rx_opt->mptcp.mp_capable = 0;
-  rx_opt->mptcp.mp_join = 0;
-  rx_opt->mptcp.dss = 0;
-#endif
-}
-
 static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
   struct iphdr *iphdr = ip_hdr(skb);
@@ -378,7 +344,7 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
 
         skb->sk->sk_user_data = trinfo;
 
-        tcpriv_tcp_parse_options(&init_net, skb, 0, NULL);
+        tcpriv_tcp_parse_options(&init_net, skb);
       }
     }
   }
