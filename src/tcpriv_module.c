@@ -191,8 +191,8 @@ static void tcpriv_tcp_options_write(__be32 *ptr, struct tcp_sock *tp, struct tc
 }
 
 /* TCP parse tcpriv option functions */
-static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_received *opt_rx, const unsigned char *ptr,
-                                 int opsize, const struct sk_buff *skb)
+static void tcpriv_parse_options(const struct tcphdr *th, const unsigned char *ptr, int opsize,
+                                 const struct sk_buff *skb)
 {
   if (th->syn && !(opsize & 1) && opsize >= TCPOLEN_EXP_TCPRIV_BASE && get_unaligned_be32(ptr) == TCPOPT_TCPRIV_MAGIC) {
     /* TODO: check tcpriv information */
@@ -207,15 +207,14 @@ static void tcpriv_parse_options(const struct tcphdr *th, struct tcp_options_rec
 }
 
 /* ref: https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_input.c#L3839 */
-void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, struct tcp_options_received *opt_rx,
-                              int estab, struct tcp_fastopen_cookie *foc)
+void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, int estab,
+                              struct tcp_fastopen_cookie *foc)
 {
   const unsigned char *ptr;
   const struct tcphdr *th = tcp_hdr(skb);
   int length = (th->doff * 4) - sizeof(struct tcphdr);
 
   ptr = (const unsigned char *)(th + 1);
-  opt_rx->saw_tstamp = 0;
 
   while (length > 0) {
     int opcode = *ptr++;
@@ -245,7 +244,7 @@ void tcpriv_tcp_parse_options(const struct net *net, const struct sk_buff *skb, 
                    get_unaligned_be16(ptr) == TCPOPT_SMC_MAGIC) {
           // do nothing
         } else {
-          tcpriv_parse_options(th, opt_rx, ptr, opsize, skb);
+          tcpriv_parse_options(th, ptr, opsize, skb);
         }
 
         break;
@@ -363,7 +362,6 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
 {
   struct iphdr *iphdr = ip_hdr(skb);
   struct tcphdr *tcphdr = tcp_hdr(skb);
-  struct tcp_options_received tmp_opt;
   struct tcpriv_info *trinfo;
   int err;
 
@@ -380,10 +378,7 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
 
         skb->sk->sk_user_data = trinfo;
 
-        /* parse tcp options and store tmp_opt buffer */
-        memset(&tmp_opt, 0, sizeof(tmp_opt));
-        tcpriv_tcp_clear_options(&tmp_opt);
-        tcpriv_tcp_parse_options(&init_net, skb, &tmp_opt, 0, NULL);
+        tcpriv_tcp_parse_options(&init_net, skb, 0, NULL);
       }
     }
   }
