@@ -584,7 +584,7 @@ static int tcp_seq_show(struct seq_file *seq, void *v)
 
       seq_printf(seq, ",TCP_DEFER_ACCEPT=%d", defer);
 
-      struct sk_buff *p_skb = sk->sk_receive_queue->prev;
+      struct sk_buff *p_skb = sk->sk_receive_queue.prev;
       tcpriv_tcp_parse_options(p_skb);
 
     }
