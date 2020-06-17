@@ -196,13 +196,13 @@ static void tcpriv_parse_options(const struct tcphdr *th, const unsigned char *p
 {
   if (th->syn && !(opsize & 1) && opsize >= TCPOLEN_EXP_TCPRIV_BASE && get_unaligned_be32(ptr) == TCPOPT_TCPRIV_MAGIC) {
     /* TODO: check tcpriv information */
-    struct tcpriv_info *trinfo = (struct tcpriv_info *)skb->sk->sk_user_data;
+    struct tcpriv_info trinfo;
 
-    trinfo->sk_tcpriv = 1;
-    trinfo->uid = get_unaligned_be32(ptr + 4);
-    trinfo->gid = get_unaligned_be32(ptr + 8);
+    trinfo.sk_tcpriv = 1;
+    trinfo.uid = get_unaligned_be32(ptr + 4);
+    trinfo.gid = get_unaligned_be32(ptr + 8);
 
-    printk(KERN_INFO TCPRIV_INFO "found client process info: uid=%u gid=%u\n", trinfo->uid, trinfo->gid);
+    printk(KERN_INFO TCPRIV_INFO "found client process info: uid=%u gid=%u\n", trinfo.uid, trinfo.gid);
   }
 }
 
@@ -336,15 +336,13 @@ static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const st
       if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
         printk(KERN_INFO TCPRIV_INFO "found local in TCP syn packet from %pI4.\n", &iphdr->saddr);
 
-        trinfo = (struct tcpriv_info *)kzalloc(sizeof(struct tcpriv_info), GFP_KERNEL);
-        if (!trinfo) {
-          err = -ENOMEM;
-          goto error;
-        }
+        //trinfo = (struct tcpriv_info *)kzalloc(sizeof(struct tcpriv_info), GFP_KERNEL);
+        //if (!trinfo) {
+        //  err = -ENOMEM;
+        //  goto error;
+        //}
 
-        skb->sk->sk_user_data = trinfo;
-
-        tcpriv_tcp_parse_options(skb);
+        //tcpriv_tcp_parse_options(skb);
       }
     }
   }
@@ -585,6 +583,10 @@ static int tcp_seq_show(struct seq_file *seq, void *v)
       }
 
       seq_printf(seq, ",TCP_DEFER_ACCEPT=%d", defer);
+
+      struct sk_buff *p_skb = sk->sk_receive_queue->prev;
+      tcpriv_tcp_parse_options(p_skb);
+
     }
 
     seq_printf(seq, "\n");
