@@ -39,6 +39,44 @@
 #define TCP_SAVED_SYN 28
 #endif
 
+#define TCPOPT_NOP 1       /* Padding */
+#define TCPOPT_EOL 0       /* End of options */
+#define TCPOPT_MSS 2       /* Segment size negotiating */
+#define TCPOPT_WINDOW 3    /* Window scaling */
+#define TCPOPT_SACK_PERM 4 /* SACK Permitted */
+#define TCPOPT_SACK 5      /* SACK Block */
+#define TCPOPT_TIMESTAMP 8 /* Better RTT estimations/PAWS */
+#define TCPOPT_MD5SIG 19   /* MD5 Signature (RFC2385) */
+#define TCPOPT_FASTOPEN 34 /* Fast open (RFC7413) */
+#define TCPOPT_EXP 254     /* Experimental */
+
+/* Magic number to be after the option value for sharing TCP
+ ** experimental options. See draft-ietf-tcpm-experimental-options-00.txt
+ **/
+#define TCPOPT_FASTOPEN_MAGIC 0xF989
+
+/*
+ **     TCP option lengths
+ **/
+
+#define TCPOLEN_MSS 4
+#define TCPOLEN_WINDOW 3
+#define TCPOLEN_SACK_PERM 2
+#define TCPOLEN_TIMESTAMP 10
+#define TCPOLEN_MD5SIG 18
+#define TCPOLEN_FASTOPEN_BASE 2
+#define TCPOLEN_EXP_FASTOPEN_BASE 4
+
+/* But this is what stacks really send out. */
+#define TCPOLEN_TSTAMP_ALIGNED 12
+#define TCPOLEN_WSCALE_ALIGNED 4
+#define TCPOLEN_SACKPERM_ALIGNED 4
+#define TCPOLEN_SACK_BASE 2
+#define TCPOLEN_SACK_BASE_ALIGNED 4
+#define TCPOLEN_SACK_PERBLOCK 8
+#define TCPOLEN_MD5SIG_ALIGNED 20
+#define TCPOLEN_MSS_ALIGNED 4
+
 static void fail(const char *msg)
 {
   fprintf(stderr, "%s\n", msg);
@@ -82,16 +120,18 @@ static void read_saved_syn(int fd, int address_family)
   assert(syn[syn_len - 2] == 0x03);                             /* TCP option: length = 3 */
   assert(syn[syn_len - 1] == 0x06 || syn[syn_len - 1] == 0x07); /* TCP option: window scale = 6 or 7
                                                                  */
-
   for (int i = 0; i < syn_len; i++) {
-    printf("%d\t", syn[i]);
-    if ((i + 1) % 4 == 0)
-      printf("\n");
+    if (syn[i] == TCPOPT_EXP && syn[i + 1] == TCPOLEN_EXP_TCPRIV_BASE) {
+      printf("found tcpriv infomation\n");
+      printf("\nuid: %u\n", ntohl(*(unsigned int *)&syn[i + 1 + 4 + 1]));
+      printf("\ngid: %u\n", ntohl(*(unsigned int *)&syn[i + 1 + 4 + 1 + 4]));
+    }
   }
 
   /* If we try TCP_SAVED_SYN again it should succeed with 0 length. */
   if (getsockopt(fd, IPPROTO_TCP, TCP_SAVED_SYN, syn, &syn_len) != 0)
     fail("repeated getsockopt TCP_SAVED_SYN failed");
+
   assert(syn_len == 0);
 }
 
