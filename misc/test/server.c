@@ -50,6 +50,7 @@ static void read_saved_syn(int fd, int address_family)
   /* Check the length and first byte of the SYN. */
   if (address_family == AF_INET) {
     printf("syn_len: %d\n", syn_len);
+    assert(syn_len == 60);
     assert(syn[0] >> 4 == 0x4); /* IPv4 */
   } else if (address_family == AF_INET6) {
     assert(syn_len == 80);
@@ -105,8 +106,9 @@ int main()
 
   read_saved_syn(cli, ((struct sockaddr *)&cliaddr)->sa_family);
 
-  if (close(cli))
-    printf("test done\n");
+  close(cli);
+
+  printf("test done\n");
 
   return 0;
 }
