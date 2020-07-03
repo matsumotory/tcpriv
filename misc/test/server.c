@@ -14,6 +14,23 @@
 
 #define BUF_SIZE 256
 
+#define TCPOLEN_EXP_TCPRIV_BASE 10
+#define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 12
+
+/* ref: https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml */
+#define TCPOPT_TCPRIV_MAGIC 0xF991
+
+#define OPTION_SACK_ADVERTISE (1 << 0)
+#define OPTION_TS (1 << 1)
+#define OPTION_MD5 (1 << 2)
+#define OPTION_WSCALE (1 << 3)
+#define OPTION_FAST_OPEN_COOKIE (1 << 8)
+#define OPTION_SMC (1 << 9)
+#define OPTION_MPTCP (1 << 10)
+
+/* 1 << 10 was used by MPTCP */
+#define OPTION_TCPRIV (1 << 11)
+
 #ifndef TCP_SAVE_SYN
 #define TCP_SAVE_SYN 27
 #endif
@@ -66,6 +83,12 @@ static void read_saved_syn(int fd, int address_family)
   assert(syn[syn_len - 1] == 0x06 || syn[syn_len - 1] == 0x07); /* TCP option: window scale = 6 or 7
                                                                  */
 
+  for (int i = 0; i < syn_len; i++) {
+    printf("%d\t", syn[i]);
+    if ((i + 1) % 4 == 0)
+      printf("\n");
+  }
+
   /* If we try TCP_SAVED_SYN again it should succeed with 0 length. */
   if (getsockopt(fd, IPPROTO_TCP, TCP_SAVED_SYN, syn, &syn_len) != 0)
     fail("repeated getsockopt TCP_SAVED_SYN failed");
@@ -108,7 +131,7 @@ int main()
 
   close(cli);
 
-  printf("test done\n");
+  printf("\ntest done\n");
 
   return 0;
 }
