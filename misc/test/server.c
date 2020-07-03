@@ -49,7 +49,7 @@ static void read_saved_syn(int fd, int address_family)
 
   /* Check the length and first byte of the SYN. */
   if (address_family == AF_INET) {
-    assert(syn_len == 60);
+    printf("syn_len: %d\n", syn_len);
     assert(syn[0] >> 4 == 0x4); /* IPv4 */
   } else if (address_family == AF_INET6) {
     assert(syn_len == 80);
@@ -73,9 +73,10 @@ static void read_saved_syn(int fd, int address_family)
 
 int main()
 {
-  unsigned short port = 9876;
+  unsigned short port = 55226;
   int srv;
   int cli;
+  int one = 1;
 
   struct sockaddr_in srvaddr;
   struct sockaddr_in cliaddr;
@@ -92,6 +93,9 @@ int main()
   srv = socket(AF_INET, SOCK_STREAM, 0);
 
   bind(srv, (struct sockaddr *)&srvaddr, sizeof(srvaddr));
+
+  if (setsockopt(srv, IPPROTO_TCP, TCP_SAVE_SYN, &one, sizeof(one)) < 0)
+    fail_perror("setsockopt TCP_SAVE_SYN");
 
   listen(srv, 1);
 
