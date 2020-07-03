@@ -12,6 +12,7 @@
 #include <netdb.h>
 #include <unistd.h>
 
+#define SRV_PORT 55226
 #define BUF_SIZE 256
 
 #define TCPOLEN_EXP_TCPRIV_BASE 10
@@ -137,7 +138,7 @@ static void read_saved_syn(int fd, int address_family)
 
 int main()
 {
-  unsigned short port = 55226;
+  unsigned short port = SRV_PORT;
   int srv;
   int cli;
   int one = 1;
