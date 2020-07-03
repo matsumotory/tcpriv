@@ -7,14 +7,37 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <assert.h>
+#include <errno.h>
 
 #define server "192.168.0.3"
 #define port 55226
-#define msg "tcpriv test"
+#define MESSAGE "tcpriv test"
+
+#ifndef TCP_SAVE_SYN
+#define TCP_SAVE_SYN 27
+#endif
+
+#ifndef TCP_SAVED_SYN
+#define TCP_SAVED_SYN 28
+#endif
+
+static void fail(const char *msg)
+{
+  fprintf(stderr, "%s\n", msg);
+  exit(1);
+}
+
+static void fail_perror(const char *msg)
+{
+  perror(msg);
+  exit(1);
+}
 
 int main()
 {
   int srv;
+  int one = 1;
   struct sockaddr_in srvaddr;
 
   memset(&srvaddr, 0, sizeof(srvaddr));
@@ -25,11 +48,14 @@ int main()
 
   srv = socket(AF_INET, SOCK_STREAM, 0);
 
+  if (setsockopt(srv, IPPROTO_TCP, TCP_SAVE_SYN, &one, sizeof(one)) < 0)
+    fail_perror("setsockopt TCP_SAVE_SYN");
+
   printf("[tcpriv] connect to %s\n", server);
   connect(srv, (struct sockaddr *)&srvaddr, sizeof(srvaddr));
 
   for (int i = 0; i < 10; i++) {
-    send(srv, msg, strlen(msg) + 1, 0);
+    send(srv, MESSAGE, strlen(MESSAGE) + 1, 0);
     sleep(1);
   }
 
