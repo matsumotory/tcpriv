@@ -51,6 +51,7 @@ mkdir $BUILD_DIR
 
 if [ $MYHOST = "server" ]; then
         cd $TEST_DIR
+        make clean
         make
         ./server
 fi
@@ -68,6 +69,7 @@ if [ $MYHOST = "client" ]; then
   sudo rmmod tcpriv_module.ko
   sudo insmod tcpriv_module.ko
   cd $TEST_DIR
+  make clean
   make
   ./client
 fi
