@@ -111,7 +111,8 @@ static void read_saved_syn(int fd, int address_family)
     assert(syn_len == 60);
     assert(syn[0] >> 4 == 0x4); /* IPv4 */
   } else if (address_family == AF_INET6) {
-    assert(syn_len == 80); assert(syn[0] >> 4 == 0x6); /* IPv6 */
+    assert(syn_len == 80);
+    assert(syn[0] >> 4 == 0x6); /* IPv6 */
   } else {
     assert(!"bad address family");
   }
@@ -131,8 +132,8 @@ static void read_saved_syn(int fd, int address_family)
       tcpriv_len = syn[i + 1];
       tcpriv_magic = ntohl(*(unsigned int *)&syn[i + 1 + 1]);
       tcpriv_uid = ntohl(*(unsigned int *)&syn[i + 1 + 4 + 1]);
-      printf("found tcpriv's information: kind=%u length=%u ExID=0x%x uid=%u \n", tcpriv_kind, tcpriv_len,
-             tcpriv_magic, tcpriv_uid);
+      printf("found tcpriv's information: kind=%u length=%u ExID=0x%x uid=%u \n", tcpriv_kind, tcpriv_len, tcpriv_magic,
+             tcpriv_uid);
     }
   }
 
