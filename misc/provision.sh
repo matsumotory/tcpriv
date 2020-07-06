@@ -65,6 +65,7 @@ if [ $MYHOST = "client" ]; then
   cd $BUILD_MODULE_DIR
   cp -p $SRC_DIR/src/Makefile . && cp -p $SRC_DIR/src/tcpriv_*.c .
   make
+  sudo rmmod tcpriv_module.ko
   sudo insmod tcpriv_module.ko
   cd $TEST_DIR
   make
