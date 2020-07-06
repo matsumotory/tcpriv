@@ -188,7 +188,6 @@ static void tcpriv_tcp_options_write(__be32 *ptr, struct tcp_sock *tp, struct tc
   tcpriv_options_write(ptr, &options);
 }
 
-
 /* TCP set tcpriv option functions */
 static void tcpriv_set_option(const struct tcp_sock *tp, struct tcp_out_options *opts, unsigned int *remaining)
 {
@@ -259,7 +258,6 @@ static unsigned int tcpriv_tcp_syn_options(struct sock *sk, struct sk_buff *skb,
   return MAX_TCP_OPTION_SPACE - remaining;
 }
 
-
 static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
   struct iphdr *iphdr = ip_hdr(skb);
@@ -282,7 +280,6 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
 
   return NF_ACCEPT;
 }
-
 
 /* /proc/net/tcpriv functions */
 static int tcp_seq_show(struct seq_file *seq, void *v)
