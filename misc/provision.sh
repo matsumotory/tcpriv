@@ -71,6 +71,8 @@ if [ $MYHOST = "client" ]; then
   cd $TEST_DIR
   make clean
   make
+  echo "TEST: client try to connect server..."
   ./client
 fi
+
 
