@@ -137,6 +137,7 @@ static void read_saved_syn(int fd, int address_family)
     }
   }
 
+  /* Check the tcpriv option fields */
   assert(tcpriv_kind == TCPOPT_EXP);
   assert(tcpriv_len == TCPOLEN_EXP_TCPRIV_BASE);
   assert(tcpriv_magic == TCPOPT_TCPRIV_MAGIC);
