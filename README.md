@@ -10,11 +10,12 @@ Now under depelopment.
 
 - install vagrant
 
-- setup build enviroment
+- setup, build and test enviroment
 
 ```
 # Support mutliple vm building
-vagrant up
+vagrant up server # waiting client access after provisioning
+vagrant up client # connecting server for testing
 
 # on one terminal
 vagrant ssh client
@@ -25,15 +26,25 @@ vagrant ssh server
 
 all setup phase was provisioned automatically by `misc/provision.sh` such as installing packages, setup kernel module enviroment, building kernel module and insmod/rmmod tcpriv as a kernel module.
 
-- vagrant provision example
+- test using vagrant provision
 
 ```
-dmesg | tail
+$ vagrant provision server
+...
+server: TEST: server is waiting for client..
+server: waiting...
+server: connected: 192.168.0.2
+server: syn_len: 60
+server: found tcpriv's information: kind=254 length=10 ExID=0xf991 uid=1000 
+server: tcpriv: all test success.
+```
 
-[430] tcpriv[info]: open
-[543] tcpriv[info]: found local in TCP syn packet from 192.168.1.186.
-[566] tcpriv[info]: found client process info: uid=1000 gid=1000
-[587] tcpriv[info]: found local out TCP syn packet from 192.168.1.172.
+```
+$ vagrant provision client
+...
+client: TEST: client is trying to connect server...
+client: [tcpriv] connect to 192.168.0.3
+client: client test done
 ```
 
 ## Experiment
@@ -44,60 +55,57 @@ dmesg | tail
   <img alt="tcpriv flow" src="https://github.com/matsumotory/tcpriv/blob/master/misc/figures/tcpriv-flow.png?raw=true" width="800">
 </p>
 
-#### 1. A remote server (192.168.0.3)
+#### 1. A server (192.168.0.3)
 
 ```
 # in host
-vagrant up
+vagrant up server # or vagrant provision server
 vagrant ssh server
-
-# in vagrant server VM
-cd ~/tcpriv/build/kernel_module
-sudo insmod tcpriv_module.ko
-tail -f /var/log/kern.log
+cd ~/tcpriv/test
+./server
 ```
 
-#### 2. A client server (192.168.0,2)
+#### 2. A server (192.168.0,2)
 
 ```
 # in host
-vagrant ssh client
-
-# in vagrant client VM
-cd ~/tcpriv/build/kernel_module
-sudo insmod tcpriv_module.ko
+vagrant up client # or vagrant provision client
 
 # check uid/gid
 id
 # uid=1000(vagrant) gid=1000(vagrant) groups=1000(vagrant),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),111(lxd),118(lpadmin),119(sambashare)
 
 # access tcp port
-nc -vz 192.168.0.3 22
-# Connection to 192.168.0.3 22 port [tcp/ssh] succeeded!
+nc -vz 192.168.0.3 55226
+# Connection to 192.168.0.3 55226 port [tcp/ssh] succeeded!
 
 # change uid
 id sshd
 # uid=111(sshd) gid=65534(nogroup) groups=65534(nogroup)
 
-sudo -u sshd nc -vz 192.168.0.3 22
-# Connection to 192.168.0.3 22 port [tcp/ssh] succeeded!
+sudo -u sshd nc -vz 192.168.0.3 55226
+# Connection to 192.168.0.3 55226 port [tcp/ssh] succeeded!
 ```
 
 #### 3. The remote server (192.168.0.3)
 
 ```
-# in host
-vagrant ssh server
+vagrant@server:~/tcpriv/test$ ./server
+waiting...
+connected: 192.168.0.2
+syn_len: 60
+found tcpriv's information: kind=254 length=10 ExID=0xf991 uid=1000
+tcpriv: all test success.
+```
 
-# in vagrant server VM
-tail -f /var/log/kern.log
+```
+vagrant@server:~/tcpriv/test$ ./server
+waiting...
+connected: 192.168.0.2
+syn_len: 60
+found tcpriv's information: kind=254 length=10 ExID=0xf991 uid=111
+server: server.c:143: read_saved_syn: Assertion `tcpriv_uid == 1000' failed.
+```
 
-Apr 22 05:16:23 vagrant kernel: [543] tcpriv[info]: found local in TCP syn packet from 192.168.0.2
-Apr 22 05:16:23 vagrant kernel: [566] tcpriv[info]: found client process info: uid=1000 gid=1000 << Wow!!!!
-Apr 22 05:16:23 vagrant kernel: [587] tcpriv[info]: found local out TCP syn packet from 192.168.0.3
-
-May 13 07:43:32 server kernel: [788] tcpriv[info]: found local in TCP syn packet from 192.168.0.2.
-May 13 07:43:32 server kernel: [804] tcpriv[info]: found client process info: uid=111 gid=65534 << Wow!!!!
-May 13 07:43:32 server kernel: [821] tcpriv[info]: found local out TCP syn packet from 192.168.0.3.
 
 ```
