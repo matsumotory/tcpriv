@@ -56,10 +56,11 @@ int main()
 
   for (int i = 0; i < 10; i++) {
     send(srv, MESSAGE, strlen(MESSAGE) + 1, 0);
-    sleep(1);
   }
 
   close(srv);
+
+  printf("client test done\n");
 
   return 0;
 }
