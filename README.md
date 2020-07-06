@@ -107,5 +107,3 @@ found tcpriv's information: kind=254 length=10 ExID=0xf991 uid=111
 server: server.c:143: read_saved_syn: Assertion `tcpriv_uid == 1000' failed.
 ```
 
-
-```
