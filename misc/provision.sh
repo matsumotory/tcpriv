@@ -50,10 +50,12 @@ mkdir $BUILD_DIR
 
 
 if [ $MYHOST = "server" ]; then
-        cd $TEST_DIR
-        make clean
-        make
-        ./server
+  cd $TEST_DIR
+  make clean
+  make
+  echo "TEST: server is waiting for client.."
+  ./server
+  exit $?
 fi
 
 if [ $MYHOST = "client" ]; then
@@ -71,8 +73,9 @@ if [ $MYHOST = "client" ]; then
   cd $TEST_DIR
   make clean
   make
-  echo "TEST: client try to connect server..."
+  echo "TEST: client is trying to connect server..."
   ./client
+  exit $?
 fi
 
 
