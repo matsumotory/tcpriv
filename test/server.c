@@ -95,6 +95,7 @@ static void fail_perror(const char *msg)
 static void read_saved_syn(int fd, int address_family)
 {
   unsigned char syn[500];
+  unsigned int tcpriv_uid;
   socklen_t syn_len = sizeof(syn);
 
   memset(syn, 0, sizeof(syn));
@@ -123,10 +124,12 @@ static void read_saved_syn(int fd, int address_family)
                                                                  */
   for (int i = 0; i < syn_len; i++) {
     if (syn[i] == TCPOPT_EXP && syn[i + 1] == TCPOLEN_EXP_TCPRIV_BASE) {
-      printf("found tcpriv infomation\n");
-      printf("\nuid: %u\n", ntohl(*(unsigned int *)&syn[i + 1 + 4 + 1]));
+      tcpriv_uid = ntohl(*(unsigned int *)&syn[i + 1 + 4 + 1]);
+      printf("\nfound tcpriv's uid: %u\n", tcpriv_uid);
     }
   }
+
+  assert(tcpriv_uid == 1000);
 
   /* If we try TCP_SAVED_SYN again it should succeed with 0 length. */
   if (getsockopt(fd, IPPROTO_TCP, TCP_SAVED_SYN, syn, &syn_len) != 0)
