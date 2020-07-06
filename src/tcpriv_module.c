@@ -35,6 +35,7 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 
 /* same as OPTION_TS: __u32 tsval, tsecr; */
 /* but, use 8 bytes for tcpriv length */
+/* kind(1) + length(1) + magci(4) + uid'4) */
 #define TCPOLEN_EXP_TCPRIV_BASE 10
 #define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 12
 
@@ -104,7 +105,7 @@ static struct tcp_out_options {
 };
 
 static struct tcpriv_info {
-  u32 uid, gid;
+  u32 uid;
   unsigned int sk_tcpriv : 1;
 };
 
@@ -115,14 +116,12 @@ static void tcpriv_options_write(__be32 *ptr, u16 *options)
 {
   if (unlikely(OPTION_TCPRIV & *options)) {
     kuid_t uid = current_uid();
-    kgid_t gid = current_gid();
 
     *ptr++ = htonl((TCPOPT_NOP << 24) | (TCPOPT_NOP << 16) | (TCPOPT_EXP << 8) | (TCPOLEN_EXP_TCPRIV_BASE));
     *ptr++ = htonl(TCPOPT_TCPRIV_MAGIC);
 
     /* TODO; write tcpriv information: allocate 32bit (unsinged int) for owner/uid area */
     *ptr++ = htonl(uid.val);
-    *ptr++ = htonl(gid.val);
   }
 }
 

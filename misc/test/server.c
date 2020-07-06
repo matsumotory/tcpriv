@@ -125,7 +125,6 @@ static void read_saved_syn(int fd, int address_family)
     if (syn[i] == TCPOPT_EXP && syn[i + 1] == TCPOLEN_EXP_TCPRIV_BASE) {
       printf("found tcpriv infomation\n");
       printf("\nuid: %u\n", ntohl(*(unsigned int *)&syn[i + 1 + 4 + 1]));
-      printf("\ngid: %u\n", ntohl(*(unsigned int *)&syn[i + 1 + 4 + 1 + 4]));
     }
   }
 
