@@ -1,5 +1,6 @@
-#/bin/sh
+#/bin/bash
 
+MYHOST=`hostname`
 KVERSION=`uname -r`
 KSHORTVERSION=`uname -r | awk -F. '{printf "%d.%d.%d", $1, $2, $3}'`
 KERNEL_BUILD_HOST=matsumotory
@@ -8,6 +9,7 @@ KERNEL_LOCAL_VER=0.0.1
 SRC_DIR=~/tcpriv
 BUILD_DIR=$SRC_DIR/build
 BUILD_MODULE_DIR=$BUILD_DIR/kernel_module
+TEST_DIR=$SRC_DIR/test
 
 # use ccache
 HOSTCXX=g++
@@ -46,18 +48,26 @@ mkdir $BUILD_DIR
 #make olddefconfig
 #KBUILD_BUILD_HOST=$KERNEL_BUILD_HOST KBUILD_BUILD_USER=$KERNEL_BUILD_USER USE_CCACHE=1 CCACHE_DIR=~/.ccache make -j$THREAD HOSTCXX="$HOSTCXX" CC="$CC"
 
-# build kernel modules
-if [ -d $BUILD_MODULE_DIR ]; then
-  rm -rf $BUILD_MODULE_DIR
+
+if [ $MYHOST = "server" ]; then
+        cd $TEST_DIR
+        make
+        ./server
 fi
-mkdir $BUILD_MODULE_DIR
 
-cd $BUILD_MODULE_DIR
-cp -p $SRC_DIR/src/Makefile .&& cp -p $SRC_DIR/src/tcpriv_*.c .
-
-make
-sudo insmod tcpriv_module.ko
-sudo rmmod tcpriv_module.ko
-
-dmesg | tail
+if [ $MYHOST = "client" ]; then
+  # build kernel modules
+  if [ -d $BUILD_MODULE_DIR ]; then
+    rm -rf $BUILD_MODULE_DIR
+  fi
+  mkdir $BUILD_MODULE_DIR
+  
+  cd $BUILD_MODULE_DIR
+  cp -p $SRC_DIR/src/Makefile .&& cp -p $SRC_DIR/src/tcpriv_*.c .
+  make
+  sudo insmod tcpriv_module.ko
+  cd $TEST_DIR
+  make
+  ./client
+fi
 
