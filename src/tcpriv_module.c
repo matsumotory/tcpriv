@@ -26,10 +26,12 @@
 #endif
 
 MODULE_AUTHOR("matsumotory: Ryosuke Matsumoto");
-MODULE_DESCRIPTION("An Access Control Architecture Separating Privilege Transparently via TCP Connection Based on "
-                   "Process Information");
+MODULE_DESCRIPTION(
+    "tcpriv: An Access Control Architecture Separating Privilege Transparently via TCP Connection Based on "
+    "Process Information");
 MODULE_LICENSE("GPL");
-MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
+MODULE_INFO(free_form_info, "An Access Control Architecture Separating Privilege Transparently via TCP Connection "
+                            "Based on Process Information ");
 
 #define TCPRIV_INFO "tcpriv[info]: "
 

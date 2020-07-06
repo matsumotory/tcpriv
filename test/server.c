@@ -95,7 +95,8 @@ static void fail_perror(const char *msg)
 static void read_saved_syn(int fd, int address_family)
 {
   unsigned char syn[500];
-  unsigned int tcpriv_uid;
+  unsigned int tcpriv_uid, tcpriv_magic;
+  unsigned char tcpriv_kind, tcpriv_len;
   socklen_t syn_len = sizeof(syn);
 
   memset(syn, 0, sizeof(syn));
@@ -110,8 +111,7 @@ static void read_saved_syn(int fd, int address_family)
     assert(syn_len == 60);
     assert(syn[0] >> 4 == 0x4); /* IPv4 */
   } else if (address_family == AF_INET6) {
-    assert(syn_len == 80);
-    assert(syn[0] >> 4 == 0x6); /* IPv6 */
+    assert(syn_len == 80); assert(syn[0] >> 4 == 0x6); /* IPv6 */
   } else {
     assert(!"bad address family");
   }
@@ -125,12 +125,20 @@ static void read_saved_syn(int fd, int address_family)
   for (int i = 0; i < syn_len; i++) {
     if (syn[i] == TCPOPT_EXP && syn[i + 1] == TCPOLEN_EXP_TCPRIV_BASE &&
         ntohl(*(unsigned int *)&syn[i + 1 + 1]) == TCPOPT_TCPRIV_MAGIC) {
+      /* tcpriv options field structure
+        kind[1] + length[1] + magic[4] + content[4] */
+      tcpriv_kind = syn[i];
+      tcpriv_len = syn[i + 1];
+      tcpriv_magic = ntohl(*(unsigned int *)&syn[i + 1 + 1]);
       tcpriv_uid = ntohl(*(unsigned int *)&syn[i + 1 + 4 + 1]);
-      printf("\nfound tcpriv's information: kind=%u length=%u ExID=0x%x uid=%u \n", syn[i], syn[i + 1],
-             ntohl(*(unsigned int *)&syn[i + 1 + 1]), tcpriv_uid);
+      printf("found tcpriv's information: kind=%u length=%u ExID=0x%x uid=%u \n", tcpriv_kind, tcpriv_len,
+             tcpriv_magic, tcpriv_uid);
     }
   }
 
+  assert(tcpriv_kind == TCPOPT_EXP);
+  assert(tcpriv_len == TCPOLEN_EXP_TCPRIV_BASE);
+  assert(tcpriv_magic == TCPOPT_TCPRIV_MAGIC);
   assert(tcpriv_uid == 1000);
 
   /* If we try TCP_SAVED_SYN again it should succeed with 0 length. */
@@ -176,7 +184,7 @@ int main()
 
   close(cli);
 
-  printf("\ntest done\n");
+  printf("tcpriv: all test success.\n");
 
   return 0;
 }
