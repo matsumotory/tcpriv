@@ -60,4 +60,6 @@ int main()
   }
 
   close(srv);
+
+  return 0;
 }
