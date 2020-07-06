@@ -123,9 +123,11 @@ static void read_saved_syn(int fd, int address_family)
   assert(syn[syn_len - 1] == 0x06 || syn[syn_len - 1] == 0x07); /* TCP option: window scale = 6 or 7
                                                                  */
   for (int i = 0; i < syn_len; i++) {
-    if (syn[i] == TCPOPT_EXP && syn[i + 1] == TCPOLEN_EXP_TCPRIV_BASE) {
+    if (syn[i] == TCPOPT_EXP && syn[i + 1] == TCPOLEN_EXP_TCPRIV_BASE &&
+        ntohl(*(unsigned int *)&syn[i + 1 + 1]) == TCPOPT_TCPRIV_MAGIC) {
       tcpriv_uid = ntohl(*(unsigned int *)&syn[i + 1 + 4 + 1]);
-      printf("\nfound tcpriv's uid: %u\n", tcpriv_uid);
+      printf("\nfound tcpriv's information: kind=%u length=%u ExID=0x%x uid=%u \n", syn[i], syn[i + 1],
+             ntohl(*(unsigned int *)&syn[i + 1 + 1]), tcpriv_uid);
     }
   }
 
