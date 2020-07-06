@@ -124,8 +124,8 @@ static void read_saved_syn(int fd, int address_family)
                                                                  */
   for (int i = 0; i < syn_len; i++) {
     if (syn[i] == TCPOPT_EXP && syn[i + 1] == TCPOLEN_EXP_TCPRIV_BASE) {
-      /* tcpriv options field structure *//
-      /* kind[1] + length[1] + magic[4] + content[4] */
+      /* tcpriv options field structure
+        kind[1] + length[1] + magic[4] + content[4] */
       tcpriv_uid = ntohl(*(unsigned int *)&syn[i + 1 + 4 + 1]);
       printf("\nfound tcpriv's uid: %u\n", tcpriv_uid);
     }
