@@ -85,7 +85,6 @@ MODULE_INFO(free_form_info, "separate privilege on TCP using task_struct");
 // DEFINE_STATIC_KEY_FALSE(tcp_md5_needed);
 // EXPORT_SYMBOL(tcp_md5_needed);
 
-static struct nf_hook_ops nfho_in;
 static struct nf_hook_ops nfho_out;
 
 /* copy the stcut definition from net/ipv4/tcp_output.c */
@@ -190,69 +189,6 @@ static void tcpriv_tcp_options_write(__be32 *ptr, struct tcp_sock *tp, struct tc
   tcpriv_options_write(ptr, &options);
 }
 
-/* TCP parse tcpriv option functions */
-static void tcpriv_parse_options(const struct tcphdr *th, const unsigned char *ptr, int opsize,
-                                 const struct sk_buff *skb)
-{
-  if (th->syn && !(opsize & 1) && opsize >= TCPOLEN_EXP_TCPRIV_BASE && get_unaligned_be32(ptr) == TCPOPT_TCPRIV_MAGIC) {
-    /* TODO: check tcpriv information */
-    struct tcpriv_info trinfo;
-
-    trinfo.sk_tcpriv = 1;
-    trinfo.uid = get_unaligned_be32(ptr + 4);
-    trinfo.gid = get_unaligned_be32(ptr + 8);
-
-    printk(KERN_INFO TCPRIV_INFO "found client process info: uid=%u gid=%u\n", trinfo.uid, trinfo.gid);
-  }
-}
-
-/* ref: https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_input.c#L3839 */
-void tcpriv_tcp_parse_options(const struct sk_buff *skb)
-{
-  const unsigned char *ptr;
-  const struct tcphdr *th = tcp_hdr(skb);
-  int length = (th->doff * 4) - sizeof(struct tcphdr);
-
-  ptr = (const unsigned char *)(th + 1);
-
-  while (length > 0) {
-    int opcode = *ptr++;
-    int opsize;
-
-    switch (opcode) {
-    case TCPOPT_EOL:
-      return;
-    case TCPOPT_NOP: /* Ref: RFC 793 section 3.1 */
-      length--;
-      continue;
-    default:
-      if (length < 2)
-        return;
-      opsize = *ptr++;
-      if (opsize < 2) /* "silly options" */
-        return;
-      if (opsize > length)
-        return; /* don't parse partial options */
-      switch (opcode) {
-
-      case TCPOPT_EXP:
-        /* Fast Open or SMC option shares code 254 using a 16 bits magic number. */
-        if (opsize >= TCPOLEN_EXP_FASTOPEN_BASE && get_unaligned_be16(ptr) == TCPOPT_FASTOPEN_MAGIC) {
-          // do nothing
-        } else if (th->syn && !(opsize & 1) && opsize >= TCPOLEN_EXP_SMC_BASE &&
-                   get_unaligned_be16(ptr) == TCPOPT_SMC_MAGIC) {
-          // do nothing
-        } else {
-          tcpriv_parse_options(th, ptr, opsize, skb);
-        }
-
-        break;
-      }
-      ptr += opsize - 2;
-      length -= opsize;
-    }
-  }
-}
 
 /* TCP set tcpriv option functions */
 static void tcpriv_set_option(const struct tcp_sock *tp, struct tcp_out_options *opts, unsigned int *remaining)
@@ -324,35 +260,6 @@ static unsigned int tcpriv_tcp_syn_options(struct sock *sk, struct sk_buff *skb,
   return MAX_TCP_OPTION_SPACE - remaining;
 }
 
-static unsigned int hook_local_in_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
-{
-  struct iphdr *iphdr = ip_hdr(skb);
-  struct tcphdr *tcphdr = tcp_hdr(skb);
-  struct tcpriv_info *trinfo;
-  int err;
-
-  if (skb->sk != NULL) {
-    if (iphdr->version == 4) {
-      if (iphdr->protocol == IPPROTO_TCP && tcphdr->syn) {
-        printk(KERN_INFO TCPRIV_INFO "found local in TCP syn packet from %pI4.\n", &iphdr->saddr);
-
-        //trinfo = (struct tcpriv_info *)kzalloc(sizeof(struct tcpriv_info), GFP_KERNEL);
-        //if (!trinfo) {
-        //  err = -ENOMEM;
-        //  goto error;
-        //}
-
-        //tcpriv_tcp_parse_options(skb);
-      }
-    }
-  }
-
-  return NF_ACCEPT;
-
-error:
-  kfree(trinfo);
-  return err;
-}
 
 static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
@@ -377,220 +284,13 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
   return NF_ACCEPT;
 }
 
+
 /* /proc/net/tcpriv functions */
-
-/* ref: https://github.com/veithen/knetstat/blob/master/knetstat.c
- * Thank you for your great work, knetstat.c! */
-
-static const char *const tcp_state_names[] = {"NONE", "ESTB", "SYNS", "SYNR", "FNW1", "FNW2", "TIMW",
-                                              "CLSD", "CLSW", "LACK", "LSTN", "CLSG", "SYNR"};
-
-static void sock_common_options_show(struct seq_file *seq, struct sock *sk)
-{
-  // Note:
-  //  * Linux actually doubles the values for SO_RCVBUF and SO_SNDBUF (see sock_setsockopt in net/core/sock.c)
-  //  * If these options are not set explicitly, the kernel may dynamically scale the buffer sizes
-  if (sk->sk_userlocks & SOCK_RCVBUF_LOCK) {
-    seq_printf(seq, ",SO_RCVBUF=%d", sk->sk_rcvbuf / 2);
-  }
-  if (sk->sk_userlocks & SOCK_SNDBUF_LOCK) {
-    seq_printf(seq, ",SO_SNDBUF=%d", sk->sk_sndbuf / 2);
-  }
-
-  if (sk->sk_rcvtimeo != MAX_SCHEDULE_TIMEOUT) {
-    seq_printf(seq, ",SO_RCVTIMEO=%ldms", sk->sk_rcvtimeo * 1000 / HZ);
-  }
-  if (sk->sk_sndtimeo != MAX_SCHEDULE_TIMEOUT) {
-    seq_printf(seq, ",SO_SNDTIMEO=%ldms", sk->sk_sndtimeo * 1000 / HZ);
-  }
-
-  if (sock_flag(sk, SOCK_LINGER)) {
-    seq_printf(seq, ",SO_LINGER=%lds", sk->sk_lingertime / HZ);
-  }
-}
-
-static void addr_port_show(struct seq_file *seq, sa_family_t family, const void *addr, __u16 port)
-{
-  seq_setwidth(seq, 23);
-  seq_printf(seq, family == AF_INET6 ? "%pI6c" : "%pI4", addr);
-  if (port == 0) {
-    seq_puts(seq, ":*");
-  } else {
-    seq_printf(seq, ":%d", port);
-  }
-  seq_pad(seq, ' ');
-}
-
 static int tcp_seq_show(struct seq_file *seq, void *v)
 {
-  if (v == SEQ_START_TOKEN) {
-    seq_printf(seq, "TCPRIV Information\n");
-  } else {
+  if (v == SEQ_START_TOKEN)
+    seq_printf(seq, "enabled\n");
 
-    struct tcp_iter_state *st = seq->private;
-    struct tcp_seq_afinfo *afinfo = PDE_DATA(file_inode(seq->file));
-    sa_family_t family = afinfo->family;
-
-    int rx_queue;
-    int tx_queue;
-    const void *dest;
-    const void *src;
-    __u16 destp;
-    __u16 srcp;
-    int state;
-    struct sock *sk;
-    int fo_qlen = 0;
-    u8 defer = 0;
-
-    switch (st->state) {
-    case TCP_SEQ_STATE_LISTENING:
-    case TCP_SEQ_STATE_ESTABLISHED: {
-
-      sk = v;
-
-      if (sk->sk_state == TCP_TIME_WAIT) {
-
-        const struct inet_timewait_sock *tw = v;
-
-        rx_queue = 0;
-        tx_queue = 0;
-
-        if (family == AF_INET6) {
-          dest = &tw->tw_v6_daddr;
-          src = &tw->tw_v6_rcv_saddr;
-        } else {
-          dest = &tw->tw_daddr;
-          src = &tw->tw_rcv_saddr;
-        }
-
-        destp = ntohs(tw->tw_dport);
-        srcp = ntohs(tw->tw_sport);
-        state = tw->tw_substate;
-        sk = NULL;
-
-      } else {
-
-        const struct tcp_sock *tp;
-        const struct inet_sock *inet;
-        const struct fastopen_queue *fq;
-
-        tp = tcp_sk(sk);
-        inet = inet_sk(sk);
-        defer = inet_csk(sk)->icsk_accept_queue.rskq_defer_accept;
-
-        switch (sk->sk_state) {
-        case TCP_LISTEN:
-
-          rx_queue = sk->sk_ack_backlog;
-          tx_queue = 0;
-          fq = &inet_csk(sk)->icsk_accept_queue.fastopenq;
-
-          if (fq != NULL) {
-            fo_qlen = fq->max_qlen;
-          }
-
-          break;
-        case TCP_NEW_SYN_RECV:
-
-          rx_queue = 0;
-          tx_queue = 0;
-
-          break;
-
-        default:
-          rx_queue = max_t(int, tp->rcv_nxt - tp->copied_seq, 0);
-          tx_queue = tp->write_seq - tp->snd_una;
-        }
-
-        if (family == AF_INET6) {
-          dest = &sk->sk_v6_daddr;
-          src = &sk->sk_v6_rcv_saddr;
-        } else {
-          dest = &inet->inet_daddr;
-          src = &inet->inet_rcv_saddr;
-        }
-
-        destp = ntohs(inet->inet_dport);
-        srcp = ntohs(inet->inet_sport);
-        state = sk->sk_state;
-
-        if (sk->sk_state == TCP_NEW_SYN_RECV) {
-          sk = NULL;
-        }
-      }
-      break;
-    }
-
-    default:
-      return 0;
-    }
-
-    if (state < 0 || state >= TCP_MAX_STATES) {
-      state = 0;
-    }
-
-    seq_printf(seq, "%6d %6d ", rx_queue, tx_queue);
-    addr_port_show(seq, family, src, srcp);
-    addr_port_show(seq, family, dest, destp);
-    seq_printf(seq, "%s ", tcp_state_names[state]);
-
-    if (sk != NULL) {
-
-      seq_setwidth(seq, 4);
-
-      if (state == TCP_ESTABLISHED) {
-
-        const struct tcp_sock *tp = tcp_sk(sk);
-
-        if (tp->rcv_wnd == 0 && tp->snd_wnd == 0) {
-          // Both receiver and sender windows are 0; we can neither receive nor send more data
-          seq_puts(seq, ">|<");
-        } else if (tp->rcv_wnd == 0) {
-          // Receiver window is 0; we cannot receive more data
-          seq_puts(seq, "|<");
-        } else if (tp->snd_wnd == 0) {
-          // Sender window is 0; we cannot send more data
-          seq_puts(seq, ">|");
-        } else if (tp->snd_nxt > tp->snd_una && tcp_time_stamp - tp->rcv_tstamp > HZ) {
-          // There are unacknowledged packets and the last ACK was received more than 1 second ago;
-          // this is an indication for network problems
-          seq_puts(seq, ">#");
-        }
-      }
-      seq_pad(seq, ' ');
-
-      seq_printf(seq, "SO_REUSEADDR=%d,SO_REUSEPORT=%d,SO_KEEPALIVE=%d", sk->sk_reuse, sk->sk_reuseport,
-                 sock_flag(sk, SOCK_KEEPOPEN));
-
-      if (tcp_sk(sk)->keepalive_time > 0) {
-        seq_printf(seq, ",TCP_KEEPIDLE=%u", tcp_sk(sk)->keepalive_time / HZ);
-      }
-
-      if (tcp_sk(sk)->keepalive_probes > 0) {
-        seq_printf(seq, ",TCP_KEEPCNT=%u", tcp_sk(sk)->keepalive_probes);
-      }
-
-      if (tcp_sk(sk)->keepalive_intvl > 0) {
-        seq_printf(seq, ",TCP_KEEPINTVL=%u", tcp_sk(sk)->keepalive_intvl / HZ);
-      }
-
-      sock_common_options_show(seq, sk);
-
-      seq_printf(seq, ",TCP_NODELAY=%d", !!(tcp_sk(sk)->nonagle & TCP_NAGLE_OFF));
-
-      if (state == TCP_LISTEN) {
-        seq_printf(seq, ",TCP_FASTOPEN=%d", fo_qlen);
-      }
-
-      seq_printf(seq, ",TCP_DEFER_ACCEPT=%d", defer);
-
-      struct sk_buff *p_skb = sk->sk_receive_queue.prev;
-      tcpriv_tcp_parse_options(p_skb);
-
-    }
-
-    seq_printf(seq, "\n");
-  }
   return 0;
 }
 
@@ -638,13 +338,6 @@ static int __init tcpriv_init(void)
   if (ret < 0)
     return ret;
 
-  nfho_in.hook = hook_local_in_func;
-  nfho_in.hooknum = NF_INET_LOCAL_IN;
-  nfho_in.pf = PF_INET;
-  nfho_in.priority = NF_IP_PRI_FIRST;
-
-  nf_register_net_hook(&init_net, &nfho_in);
-
   nfho_out.hook = hook_local_out_func;
   nfho_out.hooknum = NF_INET_LOCAL_OUT;
   nfho_out.pf = PF_INET;
@@ -657,7 +350,6 @@ static int __init tcpriv_init(void)
 
 static void __exit tcpriv_exit(void)
 {
-  nf_unregister_net_hook(&init_net, &nfho_in);
   nf_unregister_net_hook(&init_net, &nfho_out);
 
   unregister_pernet_subsys(&tcpriv_net_ops);
