@@ -1,3 +1,16 @@
 .vagrant/
 build/
 a.out
+.tcpriv_module.ko.cmd
+.tcpriv_module.mod.cmd
+.tcpriv_module.mod.o.cmd
+.tcpriv_module.o.cmd
+Module.symvers
+modules.order
+tcpriv_module.ko
+tcpriv_module.mod
+tcpriv_module.mod.c
+tcpriv_module.mod.o
+tcpriv_module.o
+client
+server
