@@ -96,19 +96,20 @@ sudo -u sshd nc -vz 192.168.0.3 55226
 
 ```
 vagrant@server:~/tcpriv/test$ ./server
-waiting...
-connected: 192.168.0.2
-syn_len: 60
-found tcpriv's information: kind=254 length=10 ExID=0xf991 uid=1000
-tcpriv: all test success.
+tcpriv[info]: waiting...
+tcpriv[info]: connected: 192.168.0.2
+tcpriv[info]: syn_len: 60
+tcpriv[info]: found tcpriv's information: kind=254 length=10 ExID=0xf991 uid=1000
+tcpriv[info]: all test success.
 ```
 
 ```
 vagrant@server:~/tcpriv/test$ ./server
-waiting...
-connected: 192.168.0.2
-syn_len: 60
-found tcpriv's information: kind=254 length=10 ExID=0xf991 uid=111
-server: server.c:143: read_saved_syn: Assertion `tcpriv_uid == 1000' failed.
+tcpriv[info]: waiting...
+tcpriv[info]: connected: 192.168.0.2
+tcpriv[info]: syn_len: 60
+tcpriv[info]: found tcpriv's information: kind=254 length=10 ExID=0xf991 uid=111
+server: server.c:146: read_saved_syn: Assertion `tcpriv_uid == 1000' failed.
+Aborted (core dumped)
 ```
 
