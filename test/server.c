@@ -153,39 +153,30 @@ static void read_saved_syn(int fd, int address_family)
 int main()
 {
   unsigned short port = SRV_PORT;
-  int srv;
-  int cli;
+  struct sockaddr_in srv_addr, cli_addr;
+  int srv_fd, cli_fd;
   int one = 1;
+  int cli_addr_size = sizeof(cli_addr);
 
-  struct sockaddr_in srvaddr;
-  struct sockaddr_in cliaddr;
-  int cliaddrsize = sizeof(cliaddr);
+  memset(&srv_addr, 0, sizeof(srv_addr));
 
-  int numrcv;
-  char buf[BUF_SIZE];
+  srv_addr.sin_port = htons(port);
+  srv_addr.sin_family = AF_INET;
+  srv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-  memset(&srvaddr, 0, sizeof(srvaddr));
-  srvaddr.sin_port = htons(port);
-  srvaddr.sin_family = AF_INET;
-  srvaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+  srv_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-  srv = socket(AF_INET, SOCK_STREAM, 0);
+  bind(srv_fd, (struct sockaddr *)&srv_addr, sizeof(srv_addr));
 
-  bind(srv, (struct sockaddr *)&srvaddr, sizeof(srvaddr));
-
-  if (setsockopt(srv, IPPROTO_TCP, TCP_SAVE_SYN, &one, sizeof(one)) < 0)
+  if (setsockopt(srv_fd, IPPROTO_TCP, TCP_SAVE_SYN, &one, sizeof(one)) < 0)
     fail_perror("setsockopt TCP_SAVE_SYN");
 
-  listen(srv, 1);
-
+  listen(srv_fd, 1);
   printf("waiting...\n");
-  cli = accept(srv, (struct sockaddr *)&cliaddr, &cliaddrsize);
-  printf("connected: %s\n", inet_ntoa(cliaddr.sin_addr));
-
-  read_saved_syn(cli, ((struct sockaddr *)&cliaddr)->sa_family);
-
-  close(cli);
-
+  cli_fd = accept(srv_fd, (struct sockaddr *)&cli_addr, &cli_addr_size);
+  printf("connected: %s\n", inet_ntoa(cli_addr.sin_addr));
+  read_saved_syn(cli_fd, ((struct sockaddr *)&cli_addr)->sa_family);
+  close(cli_fd);
   printf("tcpriv: all test success.\n");
 
   return 0;
