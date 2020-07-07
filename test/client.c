@@ -13,6 +13,8 @@
 #define server "192.168.0.3"
 #define port 55226
 #define MESSAGE "tcpriv test"
+#define TCPRIV_INFO "tcpriv[info]: "
+#define TCPRIV_ERRO "tcpriv[erro]: "
 
 #ifndef TCP_SAVE_SYN
 #define TCP_SAVE_SYN 27
@@ -24,7 +26,7 @@
 
 static void fail(const char *msg)
 {
-  fprintf(stderr, "%s\n", msg);
+  fprintf(stderr, TCPRIV_ERRO "%s\n", msg);
   exit(1);
 }
 
@@ -36,31 +38,31 @@ static void fail_perror(const char *msg)
 
 int main()
 {
-  int srv;
+  int srv_fd;
   int one = 1;
-  struct sockaddr_in srvaddr;
+  struct sockaddr_in srv_addr;
 
-  memset(&srvaddr, 0, sizeof(srvaddr));
+  memset(&srv_addr, 0, sizeof(srv_addr));
 
-  srvaddr.sin_port = htons(port);
-  srvaddr.sin_family = AF_INET;
-  srvaddr.sin_addr.s_addr = inet_addr(server);
+  srv_addr.sin_port = htons(port);
+  srv_addr.sin_family = AF_INET;
+  srv_addr.sin_addr.s_addr = inet_addr(server);
 
-  srv = socket(AF_INET, SOCK_STREAM, 0);
+  srv_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-  if (setsockopt(srv, IPPROTO_TCP, TCP_SAVE_SYN, &one, sizeof(one)) < 0)
-    fail_perror("setsockopt TCP_SAVE_SYN");
+  if (setsockopt(srv_fd, IPPROTO_TCP, TCP_SAVE_SYN, &one, sizeof(one)) < 0)
+    fail_perror(TCPRIV_ERRO "setsockopt TCP_SAVE_SYN");
 
-  printf("[tcpriv] connect to %s\n", server);
-  connect(srv, (struct sockaddr *)&srvaddr, sizeof(srvaddr));
+  printf(TCPRIV_INFO "connect to %s\n", server);
+  connect(srv_fd, (struct sockaddr *)&srv_addr, sizeof(srv_addr));
 
   for (int i = 0; i < 10; i++) {
-    send(srv, MESSAGE, strlen(MESSAGE) + 1, 0);
+    send(srv_fd, MESSAGE, strlen(MESSAGE) + 1, 0);
   }
 
-  close(srv);
+  close(srv_fd);
 
-  printf("client test done\n");
+  printf(TCPRIV_INFO "client test done\n");
 
   return 0;
 }
