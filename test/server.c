@@ -13,7 +13,8 @@
 #include <unistd.h>
 
 #define SRV_PORT 55226
-#define BUF_SIZE 256
+#define TCPRIV_INFO "tcpriv[info]: "
+#define TCPRIV_ERRO "tcpriv[erro]: "
 
 #define TCPOLEN_EXP_TCPRIV_BASE 10
 #define TCPOLEN_EXP_TCPRIV_BASE_ALIGNED 12
@@ -80,7 +81,7 @@
 
 static void fail(const char *msg)
 {
-  fprintf(stderr, "%s\n", msg);
+  fprintf(stderr, TCPRIV_ERRO "%s\n", msg);
   exit(1);
 }
 
@@ -103,11 +104,11 @@ static void read_saved_syn(int fd, int address_family)
 
   /* Read the saved SYN. */
   if (getsockopt(fd, IPPROTO_TCP, TCP_SAVED_SYN, syn, &syn_len) != 0)
-    fail_perror("first getsockopt TCP_SAVED_SYN failed");
+    fail_perror(TCPRIV_ERRO "first getsockopt TCP_SAVED_SYN failed");
 
   /* Check the length and first byte of the SYN. */
   if (address_family == AF_INET) {
-    printf("syn_len: %d\n", syn_len);
+    printf(TCPRIV_INFO "syn_len: %d\n", syn_len);
     assert(syn_len == 60);
     assert(syn[0] >> 4 == 0x4); /* IPv4 */
   } else if (address_family == AF_INET6) {
@@ -132,7 +133,7 @@ static void read_saved_syn(int fd, int address_family)
       tcpriv_len = syn[i + 1];
       tcpriv_magic = ntohl(*(unsigned int *)&syn[i + 1 + 1]);
       tcpriv_uid = ntohl(*(unsigned int *)&syn[i + 1 + 4 + 1]);
-      printf("found tcpriv's information: kind=%u length=%u ExID=0x%x uid=%u \n", tcpriv_kind, tcpriv_len, tcpriv_magic,
+      printf(TCPRIV_INFO "found tcpriv's information: kind=%u length=%u ExID=0x%x uid=%u \n", tcpriv_kind, tcpriv_len, tcpriv_magic,
              tcpriv_uid);
     }
   }
@@ -169,15 +170,15 @@ int main()
   bind(srv_fd, (struct sockaddr *)&srv_addr, sizeof(srv_addr));
 
   if (setsockopt(srv_fd, IPPROTO_TCP, TCP_SAVE_SYN, &one, sizeof(one)) < 0)
-    fail_perror("setsockopt TCP_SAVE_SYN");
+    fail_perror(TCPRIV_ERRO "setsockopt TCP_SAVE_SYN");
 
   listen(srv_fd, 1);
-  printf("waiting...\n");
+  printf(TCPRIV_INFO "waiting...\n");
   cli_fd = accept(srv_fd, (struct sockaddr *)&cli_addr, &cli_addr_size);
-  printf("connected: %s\n", inet_ntoa(cli_addr.sin_addr));
+  printf(TCPRIV_INFO "connected: %s\n", inet_ntoa(cli_addr.sin_addr));
   read_saved_syn(cli_fd, ((struct sockaddr *)&cli_addr)->sa_family);
   close(cli_fd);
-  printf("tcpriv: all test success.\n");
+  printf(TCPRIV_INFO "all test success.\n");
 
   return 0;
 }
