@@ -135,6 +135,7 @@ static void read_saved_syn(int fd, int address_family)
       tcpriv_uid = ntohl(*(unsigned int *)&syn[i + 1 + 4 + 1]);
       printf(TCPRIV_INFO "found tcpriv's information: kind=%u length=%u ExID=0x%x uid=%u \n", tcpriv_kind, tcpriv_len,
              tcpriv_magic, tcpriv_uid);
+      break;
     }
   }
 
