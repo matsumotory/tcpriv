@@ -33,6 +33,7 @@ MODULE_LICENSE("GPL");
 MODULE_INFO(free_form_info, "An Access Control Architecture Separating Privilege Transparently via TCP Connection "
                             "Based on Process Information ");
 
+#define TCPRIV_VERSION "0.0.1"
 #define TCPRIV_INFO "tcpriv[info]: "
 
 /* same as OPTION_TS: __u32 tsval, tsecr; */
@@ -287,7 +288,7 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
 static int tcp_seq_show(struct seq_file *seq, void *v)
 {
   if (v == SEQ_START_TOKEN)
-    seq_printf(seq, "enabled\n");
+    seq_printf(seq, "tcpriv v" TCPRIV_VERSION " was enabled.\n");
 
   return 0;
 }
