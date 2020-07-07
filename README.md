@@ -70,6 +70,11 @@ cd ~/tcpriv/test
 ```
 # in host
 vagrant up client # or vagrant provision client
+vagrant ssh client
+
+# in vm
+cat /proc/net/tcpriv 
+# tcpriv v0.0.1 was enabled.
 
 # check uid/gid
 id
