@@ -329,7 +329,7 @@ static int __init tcpriv_init(void)
 {
   int ret;
 
-  printk(KERN_INFO TCPRIV_INFO "open\n");
+  printk(KERN_INFO TCPRIV_INFO "tcpriv v" TCPRIV_VERSION " starts \n");
   printk(KERN_INFO TCPRIV_INFO "An Access Control Architecture Separating Privilege Transparently via TCP Connection "
                                "Based on Process Information\n");
 
