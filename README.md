@@ -65,7 +65,7 @@ cd ~/tcpriv/test
 ./server
 ```
 
-#### 2. A server (192.168.0,2)
+#### 2. A client (192.168.0.2)
 
 ```
 # in host
