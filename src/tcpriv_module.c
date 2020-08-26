@@ -284,58 +284,11 @@ static unsigned int hook_local_out_func(void *priv, struct sk_buff *skb, const s
   return NF_ACCEPT;
 }
 
-/* /proc/net/tcpriv functions */
-static int tcp_seq_show(struct seq_file *seq, void *v)
-{
-  if (v == SEQ_START_TOKEN)
-    seq_printf(seq, "tcpriv v" TCPRIV_VERSION " was enabled.\n");
-
-  return 0;
-}
-
-static const struct seq_operations tcpriv_seq_ops = {
-    .show = tcp_seq_show,
-    .start = tcp_seq_start,
-    .next = tcp_seq_next,
-    .stop = tcp_seq_stop,
-};
-
-static struct tcp_seq_afinfo tcpriv_seq_afinfo = {
-    .family = AF_INET,
-};
-
-static int __net_init tcpriv_net_init(struct net *net)
-{
-  if (!proc_create_net_data("tcpriv", 0444, net->proc_net, &tcpriv_seq_ops, sizeof(struct tcp_iter_state),
-                            &tcpriv_seq_afinfo)) {
-    remove_proc_entry("tcpriv", net->proc_net);
-    return -ENOMEM;
-  }
-
-  return 0;
-}
-
-static void __net_exit tcpriv_net_exit(struct net *net)
-{
-  remove_proc_entry("tcpriv", net->proc_net);
-}
-
-static struct pernet_operations tcpriv_net_ops = {
-    .init = tcpriv_net_init,
-    .exit = tcpriv_net_exit,
-};
-
 static int __init tcpriv_init(void)
 {
-  int ret;
-
   printk(KERN_INFO TCPRIV_INFO "tcpriv v" TCPRIV_VERSION " starts \n");
   printk(KERN_INFO TCPRIV_INFO "An Access Control Architecture Separating Privilege Transparently via TCP Connection "
                                "Based on Process Information\n");
-
-  ret = register_pernet_subsys(&tcpriv_net_ops);
-  if (ret < 0)
-    return ret;
 
   nfho_out.hook = hook_local_out_func;
   nfho_out.hooknum = NF_INET_LOCAL_OUT;
@@ -350,8 +303,6 @@ static int __init tcpriv_init(void)
 static void __exit tcpriv_exit(void)
 {
   nf_unregister_net_hook(&init_net, &nfho_out);
-
-  unregister_pernet_subsys(&tcpriv_net_ops);
 
   printk(KERN_INFO TCPRIV_INFO "close\n");
 }
